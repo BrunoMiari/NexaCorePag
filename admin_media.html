@@ -468,57 +468,11 @@
         <span id="storage-text" style="font-size: 0.7rem; color: var(--text-gray); margin-right: auto;">Uso: 0%</span>
         <button class="btn btn-primary" id="save-btn" onclick="saveAll()">Guardar Cambios</button>
     </div>
-    <script>
+    <script type="module">
+        import { db, storage, doc, getDoc, setDoc, ref, uploadBytes, getDownloadURL } from './firebase-config.js';
+
         // Auth Check
         if (sessionStorage.getItem('nexa_admin') !== 'true') window.location.href = 'index.html';
-
-        // --- IndexedDB Storage Helper ---
-        class NexaStorage {
-            static dbName = 'NexaCoreDB';
-            static storeName = 'media';
-
-            static async getDB() {
-                return new Promise((resolve, reject) => {
-                    const request = indexedDB.open(this.dbName, 1);
-                    request.onupgradeneeded = () => request.result.createObjectStore(this.storeName);
-                    request.onsuccess = () => resolve(request.result);
-                    request.onerror = () => reject(request.error);
-                });
-            }
-
-            static async get(key) {
-                const db = await this.getDB();
-                return new Promise((resolve, reject) => {
-                    const tx = db.transaction(this.storeName, 'readonly');
-                    const store = tx.objectStore(this.storeName);
-                    const request = store.get(key);
-                    request.onsuccess = () => resolve(request.result);
-                    request.onerror = () => reject(request.error);
-                });
-            }
-
-            static async set(key, value) {
-                const db = await this.getDB();
-                return new Promise((resolve, reject) => {
-                    const tx = db.transaction(this.storeName, 'readwrite');
-                    const store = tx.objectStore(this.storeName);
-                    const request = store.put(value, key);
-                    request.onsuccess = () => resolve();
-                    request.onerror = () => reject(request.error);
-                });
-            }
-
-            static async delete(key) {
-                const db = await this.getDB();
-                return new Promise((resolve, reject) => {
-                    const tx = db.transaction(this.storeName, 'readwrite');
-                    const store = tx.objectStore(this.storeName);
-                    const request = store.delete(key);
-                    request.onsuccess = () => resolve();
-                    request.onerror = () => reject(request.error);
-                });
-            }
-        }
 
         let mediaState = {
             heroVideo: '', heroPoster: '', demoVideo: '', demoPoster: '',
@@ -537,13 +491,17 @@
         const activeModes = {};
 
         async function init() {
-            let saved = await NexaStorage.get('config');
-            const legacy = localStorage.getItem('nexa_media');
+            let saved;
+            try {
+                const snap = await getDoc(doc(db, 'config', 'media'));
+                if (snap.exists()) saved = snap.data();
+            } catch (error) {
+                console.warn("NexaCore: Error loading from Firestore, trying local fallback", error);
+            }
 
-            if (!saved && legacy) {
-                saved = JSON.parse(legacy);
-                await NexaStorage.set('config', saved);
-                localStorage.removeItem('nexa_media');
+            if (!saved) {
+                const legacy = localStorage.getItem('nexa_media');
+                if (legacy) saved = JSON.parse(legacy);
             }
 
             if (saved) mediaState = { ...mediaState, ...saved };
@@ -554,7 +512,6 @@
                 const card = document.querySelector(`[data-key="${key}"]`);
                 if (!card) return;
 
-                // Simplified Precision Controls UI
                 if (!card.querySelector('.precision-controls')) {
                     const controlsGroup = document.createElement('div');
                     controlsGroup.className = 'precision-controls';
@@ -565,24 +522,32 @@
                     controlsGroup.innerHTML = `
                         <div style="display:flex; align-items:center; gap:10px;">
                             <span style="font-size: 0.75rem; color: var(--text-gray);">Modo:</span>
-                            <select onchange="updateFit('${key}', this.value)" style="flex:1; padding:8px; font-size:0.8rem; background:rgba(255,255,255,0.05); border:1px solid var(--glass-border); border-radius:8px; color:white;">
-                                <option value="cover" ${mediaState[key + 'Fit'] === 'cover' ? 'selected' : ''}>Ajustar a la Caja (Recortar)</option>
-                                <option value="contain" ${mediaState[key + 'Fit'] === 'contain' ? 'selected' : ''}>Imagen Completa (Muestra todo)</option>
+                            <select id="fit-sel-${key}" style="flex:1; padding:8px; font-size:0.8rem; background:rgba(255,255,255,0.05); border:1px solid var(--glass-border); border-radius:8px; color:white;">
+                                <option value="cover">Ajustar a la Caja (Recortar)</option>
+                                <option value="contain">Imagen Completa (Muestra todo)</option>
                             </select>
                         </div>
                         <div style="text-align:center;">
                             <button class="btn btn-outline btn-small" style="font-size: 0.7rem; padding: 10px 12px; width:100%; border-color:var(--secondary); color:var(--secondary);" 
-                                onclick="openCropper('${key}')" ${mediaState[key + 'Fit'] === 'contain' ? 'disabled' : ''} id="crop-btn-${key}">
+                                id="crop-btn-${key}">
                                 📐 Reajustar Encuadre Profesional
                             </button>
                         </div>
                     `;
                     card.querySelector('.input-area').parentNode.insertBefore(controlsGroup, card.querySelector('.preview-area'));
+
+                    // Event listeners for selects and buttons
+                    const sel = document.getElementById(`fit-sel-${key}`);
+                    sel.value = mediaState[key + 'Fit'] || 'cover';
+                    sel.onchange = (e) => updateFit(key, e.target.value);
+
+                    const cBtn = document.getElementById(`crop-btn-${key}`);
+                    cBtn.disabled = (sel.value === 'contain');
+                    cBtn.onclick = () => openCropper(key);
                 }
 
                 const val = mediaState[key] || '';
-                const isBase64 = val.startsWith('data:');
-                const initialMode = isBase64 ? 'file' : 'url';
+                const initialMode = 'url'; // Default to URL since cloud urls are more common now
 
                 const btn = card.querySelector(`[data-mode="${initialMode}"]`) || card.querySelector(`[data-mode="url"]`);
                 setMode(btn, key, false);
@@ -597,7 +562,7 @@
         let cropStartX, cropStartY, startPosX, startPosY;
         let isDragging = false;
 
-        function openCropper(key) {
+        window.openCropper = (key) => {
             const value = mediaState[key];
             if (!value) return;
             if (mediaState[key + 'Fit'] === 'contain') return;
@@ -648,12 +613,12 @@
             const container = document.getElementById('cropper-container');
             container.onmousedown = (e) => startModalDrag(e);
             container.ontouchstart = (e) => startModalDrag(e.touches[0]);
-        }
+        };
 
-        function updateZoom(val) {
+        window.updateZoom = (val) => {
             cropZoom = parseFloat(val);
             updateCropperUI();
-        }
+        };
 
         function startModalDrag(e) {
             isDragging = true;
@@ -669,7 +634,7 @@
             document.ontouchend = () => isDragging = false;
         }
 
-        function handleModalDrag(e, initX, initY) {
+        function handleModalDrag(e) {
             if (!isDragging) return;
 
             const deltaX = e.clientX - cropStartX;
@@ -679,7 +644,6 @@
             const maskW = mask.offsetWidth;
             const maskH = mask.offsetHeight;
 
-            // Sensitivity based on zoom (more zoom = slower movement in percentage)
             const sensitivity = 100 / cropZoom;
 
             cropPosX = startPosX - (deltaX / maskW) * sensitivity;
@@ -701,12 +665,12 @@
             }
         }
 
-        function closeCropper() {
+        window.closeCropper = () => {
             document.getElementById('cropper-modal').style.display = 'none';
             currentCropKey = null;
-        }
+        };
 
-        function confirmCrop() {
+        window.confirmCrop = () => {
             if (currentCropKey) {
                 mediaState[currentCropKey + 'Pos'] = `${cropPosX.toFixed(1)}% ${cropPosY.toFixed(1)}%`;
                 mediaState[currentCropKey + 'Zoom'] = cropZoom;
@@ -714,15 +678,15 @@
             }
             closeCropper();
             updateStorageIndicator();
-        }
+        };
 
-        window.updateFit = (key, val) => {
+        function updateFit(key, val) {
             mediaState[key + 'Fit'] = val;
             const btn = document.getElementById(`crop-btn-${key}`);
             if (btn) btn.disabled = (val === 'contain');
             refreshPreview(key);
             updateStorageIndicator();
-        };
+        }
 
         window.clearSlot = (key) => {
             if (!confirm('¿Seguro que quieres borrar este elemento?')) return;
@@ -742,12 +706,14 @@
         };
 
         window.resetAll = async () => {
-            if (!confirm('¿Borrar TODA la configuración multimedia personalizada y volver a los valores por defecto?')) return;
-            await NexaStorage.delete('config');
-            location.reload();
+            if (!confirm('¿Borrar TODA la configuración multimedia personalizada en la nube?')) return;
+            try {
+                await setDoc(doc(db, 'config', 'media'), {});
+                location.reload();
+            } catch (err) { alert(err.message); }
         };
 
-        function setMode(btn, key, updatePreviewOnly = true) {
+        window.setMode = (btn, key, updatePreviewOnly = true) => {
             const card = document.querySelector(`[data-key="${key}"]`);
             const inputArea = card.querySelector('.input-area');
             const mode = btn.dataset.mode;
@@ -758,40 +724,46 @@
             btn.classList.add('active');
 
             if (mode === 'url') {
-                inputArea.innerHTML = `<input type="text" class="url-input" placeholder="https://..." value="${mediaState[key].startsWith('data:') ? '' : mediaState[key]}" oninput="updateMediaValue('${key}', this.value)" style="width:100%; background:rgba(0,0,0,0.2); border:1px solid var(--glass-border); padding:10px; border-radius:8px; color:white;">`;
+                inputArea.innerHTML = `<input type="text" class="url-input" placeholder="https://..." value="${mediaState[key]}" oninput="updateMediaValue('${key}', this.value)" style="width:100%; background:rgba(0,0,0,0.2); border:1px solid var(--glass-border); padding:10px; border-radius:8px; color:white;">`;
             } else {
-                inputArea.innerHTML = `<input type="file" onchange="processFile('${key}', this)" style="font-size: 0.8rem; background:rgba(255,255,255,0.05); padding:8px; border-radius:8px; width:100%;">`;
+                inputArea.innerHTML = `<div id="file-status-${key}" style="font-size:0.7rem; color:var(--text-gray); margin-bottom:5px;"></div>
+                                       <input type="file" onchange="processFile('${key}', this)" style="font-size: 0.8rem; background:rgba(255,255,255,0.05); padding:8px; border-radius:8px; width:100%;">`;
             }
 
             if (updatePreviewOnly) refreshPreview(key);
-        }
+        };
 
-        function updateMediaValue(key, val) {
+        window.updateMediaValue = (key, val) => {
             mediaState[key] = val;
             refreshPreview(key);
             updateStorageIndicator();
-        }
+        };
 
-        function processFile(key, input) {
+        window.processFile = async (key, input) => {
             const file = input.files[0];
             if (!file) return;
 
-            if (file.size > 15 * 1024 * 1024) {
-                alert('Archivo excesivo (máx 15MB)');
-                input.value = '';
-                return;
-            }
+            const status = document.getElementById(`file-status-${key}`);
+            if (status) status.innerText = "Subiendo a la nube...";
 
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                mediaState[key] = e.target.result;
+            try {
+                const fileRef = ref(storage, `media/${key}_${Date.now()}`);
+                const snapshot = await uploadBytes(fileRef, file);
+                const downloadURL = await getDownloadURL(snapshot.ref);
+
+                mediaState[key] = downloadURL;
+                if (status) status.innerText = "✅ ¡Subido con éxito!";
+
                 refreshPreview(key);
                 updateStorageIndicator();
-                // Auto-open cropper on new file upload if in cover mode
+
                 if (mediaState[key + 'Fit'] === 'cover') openCropper(key);
-            };
-            reader.readAsDataURL(file);
-        }
+            } catch (error) {
+                console.error("Upload error:", error);
+                alert("Error al subir archivo a Firebase Storage.");
+                if (status) status.innerText = "❌ Error en la subida.";
+            }
+        };
 
         function refreshPreview(key) {
             const container = document.getElementById(`preview-${key}`);
@@ -816,28 +788,22 @@
         }
 
         function updateStorageIndicator() {
-            const limit = 50 * 1024 * 1024; // 50MB Soft Limit
             const used = JSON.stringify(mediaState).length;
-            const percent = Math.min(100, (used / limit) * 100);
+            const text = document.getElementById('storage-text');
+            if (text) text.innerText = `Configuración en Nube: ${(used / 1024).toFixed(1)} KB`;
 
             const bar = document.getElementById('storage-usage');
-            const text = document.getElementById('storage-text');
-            if (bar) bar.style.width = percent + '%';
-            if (text) text.innerText = `Memoria (DB): ${(used / 1024 / 1024).toFixed(1)} MB / 50 MB`;
-
-            if (percent > 85) bar.style.background = '#ffcc00';
-            else if (percent > 95) bar.style.background = '#ff4d4d';
-            else bar.style.background = 'var(--secondary)';
+            if (bar) bar.style.width = '100%';
         }
 
         window.saveAll = async () => {
             const btn = document.getElementById('save-btn');
             const originalText = btn.innerText;
-            btn.innerText = 'Guardando...';
+            btn.innerText = 'Sincronizando...';
             btn.disabled = true;
 
             try {
-                await NexaStorage.set('config', mediaState);
+                await setDoc(doc(db, 'config', 'media'), mediaState);
 
                 // Show toast
                 const toast = document.getElementById('save-toast');
@@ -849,14 +815,13 @@
                     btn.disabled = false;
                 }, 3000);
             } catch (err) {
-                console.error('NexaCore Save Error:', err);
-                alert('⚠️ ERROR AL GUARDAR EN DB: ' + err.message);
+                console.error('NexaCore Cloud Save Error:', err);
+                alert('⚠️ ERROR AL GUARDAR EN LA NUBE: ' + err.message);
                 btn.innerText = originalText;
                 btn.disabled = false;
             }
         };
 
-        // Initialize
         init();
     </script>
 </body>

@@ -1,33 +1,61 @@
-document.addEventListener('DOMContentLoaded', () => {
-    // --- Data Persistence (localStorage) ---
-    let reviews = JSON.parse(localStorage.getItem('nexa_reviews')) || [
-        { name: 'Carlos Rivera', rating: 5, comment: 'NexaCore ha transformado la manera en que gestionamos nuestros servidores. La automatización es increíble.', date: '2026-02-15 14:30' },
-        { name: 'Elena García', rating: 4, comment: 'Excelente soporte técnico y una interfaz muy intuitiva. Muy recomendado.', date: '2026-02-16 09:15' }
-    ];
+import { db, doc, getDoc, setDoc, updateDoc, collection, addDoc, getDocs, query, orderBy, limit, increment, onSnapshot } from './firebase-config.js';
 
+document.addEventListener('DOMContentLoaded', async () => {
+    // --- Data Persistence (Firestore + localStorage fallback) ---
+    let reviews = [];
     let isAdmin = sessionStorage.getItem('nexa_admin') === 'true';
 
     // --- Analytics Tracking ---
-    function trackVisit() {
-        let stats = JSON.parse(localStorage.getItem('nexa_stats')) || { totalVisits: 0, uniqueVisitors: 0, lastVisit: null, dailyVisits: {} };
+    async function trackVisit() {
+        const statsRef = doc(db, 'analytics', 'stats');
         const now = new Date();
-        const today = now.toLocaleDateString();
+        const today = now.toLocaleDateString('es-ES').replace(/\//g, '-');
 
-        stats.totalVisits++;
+        try {
+            // Increment total visits
+            await setDoc(statsRef, {
+                totalVisits: increment(1),
+                lastVisit: now.toISOString(),
+                [`dailyVisits.${today}`]: increment(1)
+            }, { merge: true });
 
-        // Track unique visitor based on a session flag
-        if (!sessionStorage.getItem('nexa_visited')) {
-            stats.uniqueVisitors++;
-            sessionStorage.setItem('nexa_visited', 'true');
+            // Track unique visitor based on a session flag
+            if (!sessionStorage.getItem('nexa_visited')) {
+                await updateDoc(statsRef, {
+                    uniqueVisitors: increment(1)
+                });
+                sessionStorage.setItem('nexa_visited', 'true');
+            }
+        } catch (error) {
+            console.warn("NexaCore: Error tracking visit (Firebase not configured?)", error);
+            // Fallback to localStorage if Firebase fails/not configured
+            let stats = JSON.parse(localStorage.getItem('nexa_stats')) || { totalVisits: 0, uniqueVisitors: 0, dailyVisits: {} };
+            stats.totalVisits++;
+            if (!sessionStorage.getItem('nexa_visited')) {
+                stats.uniqueVisitors++;
+                sessionStorage.setItem('nexa_visited', 'true');
+            }
+            stats.dailyVisits[today] = (stats.dailyVisits[today] || 0) + 1;
+            localStorage.setItem('nexa_stats', JSON.stringify(stats));
         }
-
-        // Daily visits
-        stats.dailyVisits[today] = (stats.dailyVisits[today] || 0) + 1;
-
-        localStorage.setItem('nexa_stats', JSON.stringify(stats));
     }
 
     trackVisit();
+
+    // --- Reviews Synchronization ---
+    const reviewsRef = collection(db, 'reviews');
+    const reviewsQuery = query(reviewsRef, orderBy('date', 'desc'));
+
+    onSnapshot(reviewsQuery, (snapshot) => {
+        reviews = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        renderReviews();
+    }, (error) => {
+        console.warn("NexaCore: Error loading reviews from Firestore", error);
+        // Fallback
+        reviews = JSON.parse(localStorage.getItem('nexa_reviews')) || [];
+        renderReviews();
+    });
+
 
     // --- Selectors ---
     const reviewsContainer = document.getElementById('reviews-container');
@@ -79,32 +107,46 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Review Actions ---
     if (reviewForm) {
-        reviewForm.addEventListener('submit', (e) => {
+        reviewForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             const newReview = {
                 name: document.getElementById('rev-name').value,
                 rating: parseInt(document.getElementById('rev-rating').value),
                 comment: document.getElementById('rev-comment').value,
-                date: new Date().toLocaleString('es-ES', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })
+                date: new Date().toLocaleString('es-ES', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }),
+                timestamp: Date.now()
             };
-            reviews.unshift(newReview);
-            saveAndRender();
-            reviewForm.reset();
-            alert('¡Gracias por tu reseña!');
+
+            try {
+                await addDoc(reviewsRef, newReview);
+                reviewForm.reset();
+                alert('¡Gracias por tu reseña!');
+            } catch (error) {
+                console.error("Error adding review:", error);
+                // Fallback to local
+                reviews.unshift(newReview);
+                localStorage.setItem('nexa_reviews', JSON.stringify(reviews));
+                renderReviews();
+            }
         });
     }
 
-    window.deleteReview = (index) => {
+    window.deleteReview = async (index) => {
         if (confirm('¿Seguro que quieres borrar esta reseña?')) {
-            reviews.splice(index, 1);
-            saveAndRender();
+            const reviewToDelete = reviews[index];
+            if (reviewToDelete.id) {
+                try {
+                    await deleteDoc(doc(db, 'reviews', reviewToDelete.id));
+                } catch (error) {
+                    console.error("Error deleting review:", error);
+                }
+            } else {
+                reviews.splice(index, 1);
+                localStorage.setItem('nexa_reviews', JSON.stringify(reviews));
+                renderReviews();
+            }
         }
     };
-
-    function saveAndRender() {
-        localStorage.setItem('nexa_reviews', JSON.stringify(reviews));
-        renderReviews();
-    }
 
     // --- Admin Dashboard Logic ---
     if (adminLoginBtn) {
@@ -239,16 +281,31 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     if (editReviewForm) {
-        editReviewForm.addEventListener('submit', (e) => {
+        editReviewForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             const index = document.getElementById('edit-index').value;
-            reviews[index].name = document.getElementById('edit-name').value;
-            reviews[index].date = document.getElementById('edit-date').value;
-            reviews[index].rating = parseInt(document.getElementById('edit-rating').value);
+            const updatedReview = {
+                name: document.getElementById('edit-name').value,
+                date: document.getElementById('edit-date').value,
+                rating: parseInt(document.getElementById('edit-rating').value)
+            };
 
-            editModal.style.display = 'none';
-            saveAndRender();
-            alert('Reseña actualizada correctamente.');
+            const reviewToUpdate = reviews[index];
+            if (reviewToUpdate.id) {
+                try {
+                    await updateDoc(doc(db, 'reviews', reviewToUpdate.id), updatedReview);
+                    editModal.style.display = 'none';
+                    alert('Reseña actualizada correctamente.');
+                } catch (error) {
+                    console.error("Error updating review:", error);
+                }
+            } else {
+                reviews[index] = { ...reviews[index], ...updatedReview };
+                editModal.style.display = 'none';
+                localStorage.setItem('nexa_reviews', JSON.stringify(reviews));
+                renderReviews();
+                alert('Reseña actualizada localmente.');
+            }
         });
     }
 
@@ -277,10 +334,29 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Contact Form ---
     const contactForm = document.getElementById('contact-form');
     if (contactForm) {
-        contactForm.addEventListener('submit', (e) => {
+        contactForm.addEventListener('submit', async (e) => {
             e.preventDefault();
-            alert('¡Solicitud enviada! Un experto de NexaCore se pondrá en contacto contigo pronto.');
-            contactForm.reset();
+            const lead = {
+                name: document.getElementById('name')?.value || 'N/A',
+                email: document.getElementById('email')?.value || 'N/A',
+                message: document.getElementById('message')?.value || 'N/A',
+                date: new Date().toLocaleString('es-ES'),
+                timestamp: Date.now()
+            };
+
+            try {
+                await addDoc(collection(db, 'leads'), lead);
+                alert('¡Solicitud enviada! Un experto de NexaCore se pondrá en contacto contigo pronto.');
+                contactForm.reset();
+            } catch (error) {
+                console.warn("Error sending lead to Firebase", error);
+                // Local fallback
+                let leads = JSON.parse(localStorage.getItem('nexa_leads')) || [];
+                leads.push(lead);
+                localStorage.setItem('nexa_leads', JSON.stringify(leads));
+                alert('¡Solicitud enviada! (Guardada localmente)');
+                contactForm.reset();
+            }
         });
     }
 
@@ -298,58 +374,26 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }, observerOptions);
 
-    // --- IndexedDB Storage Helper ---
-    class NexaStorage {
-        static dbName = 'NexaCoreDB';
-        static storeName = 'media';
-
-        static async getDB() {
-            return new Promise((resolve, reject) => {
-                const request = indexedDB.open(this.dbName, 1);
-                request.onupgradeneeded = () => request.result.createObjectStore(this.storeName);
-                request.onsuccess = () => resolve(request.result);
-                request.onerror = () => reject(request.error);
-            });
-        }
-
-        static async get(key) {
-            const db = await this.getDB();
-            return new Promise((resolve, reject) => {
-                const tx = db.transaction(this.storeName, 'readonly');
-                const store = tx.objectStore(this.storeName);
-                const request = store.get(key);
-                request.onsuccess = () => resolve(request.result);
-                request.onerror = () => reject(request.error);
-            });
-        }
-
-        static async set(key, value) {
-            const db = await this.getDB();
-            return new Promise((resolve, reject) => {
-                const tx = db.transaction(this.storeName, 'readwrite');
-                const store = tx.objectStore(this.storeName);
-                const request = store.put(value, key);
-                request.onsuccess = () => resolve();
-                request.onerror = () => reject(request.error);
-            });
-        }
-    }
-
     // --- Dynamic Media Loader ---
     async function loadDynamicMedia() {
-        // Migration from localStorage to IndexedDB
-        let media = await NexaStorage.get('config');
-        const legacyData = localStorage.getItem('nexa_media');
+        const configRef = doc(db, 'config', 'media');
+        let media;
 
-        if (!media && legacyData) {
-            console.log('NexaCore: Migrating legacy media to IndexedDB...');
-            media = JSON.parse(legacyData);
-            await NexaStorage.set('config', media);
-            localStorage.removeItem('nexa_media'); // Optional: keep it as backup for now? User said "without changing nothing", so let's be clean.
+        try {
+            const snap = await getDoc(configRef);
+            if (snap.exists()) {
+                media = snap.data();
+            }
+        } catch (error) {
+            console.warn("Error loading media from Firebase", error);
+        }
+
+        if (!media) {
+            const legacyData = localStorage.getItem('nexa_media');
+            if (legacyData) media = JSON.parse(legacyData);
         }
 
         if (!media) return;
-        console.log('NexaCore: Loading dynamic media from IndexedDB...', Object.keys(media));
 
         // Function to update video/poster
         const updateVideo = (videoEl, srcEl, videoUrl, posterUrl, fit = 'cover', pos = '50% 50%', zoom = 1) => {
@@ -361,7 +405,6 @@ document.addEventListener('DOMContentLoaded', () => {
             videoEl.style.objectPosition = pos;
 
             if (videoUrl) {
-                // Set the video source
                 if (srcEl) {
                     srcEl.src = videoUrl;
                 } else {
@@ -370,15 +413,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 videoEl.load();
                 videoEl.play().catch(() => { });
             } else if (posterUrl) {
-                // If only poster is provided, we MUST disable the video content 
-                // to let the poster show properly.
                 if (srcEl) srcEl.src = "";
                 videoEl.src = "";
                 videoEl.pause();
                 videoEl.load();
             }
 
-            // Always set the poster to ensure it's there as a fallback or background
             if (posterUrl) videoEl.poster = posterUrl;
         };
 

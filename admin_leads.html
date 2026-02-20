@@ -154,10 +154,13 @@
         </table>
     </div>
 
-    <script>
+    <script type="module">
+        import { db, doc, collection, onSnapshot, deleteDoc, query, orderBy } from './firebase-config.js';
+
         const authForm = document.getElementById('auth-form');
         const authModal = document.getElementById('auth-modal');
         const adminContent = document.getElementById('admin-content');
+        let leads = [];
 
         authForm.addEventListener('submit', (e) => {
             e.preventDefault();
@@ -165,51 +168,80 @@
             if (pass === 'Bruno2008') {
                 authModal.style.display = 'none';
                 adminContent.style.display = 'block';
-                renderLeads();
+                initRealtimeLeads();
             } else {
                 alert('Acceso denegado.');
             }
         });
 
+        function initRealtimeLeads() {
+            const leadsRef = collection(db, 'leads');
+            const leadsQuery = query(leadsRef, orderBy('timestamp', 'desc'));
+
+            onSnapshot(leadsQuery, (snapshot) => {
+                leads = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                renderLeads();
+            }, (error) => {
+                console.error("Error with leads snapshot:", error);
+                // Fallback to local
+                leads = JSON.parse(localStorage.getItem('nexa_leads')) || [];
+                renderLeads();
+            });
+        }
+
         function renderLeads() {
-            const leads = JSON.parse(localStorage.getItem('nexa_leads')) || [];
             const body = document.getElementById('leads-body');
             document.getElementById('total-leads').innerText = leads.length;
 
             body.innerHTML = leads.map((lead, index) => `
                 <tr>
                     <td style="color: var(--text-gray); font-size: 0.8rem;">${lead.date}</td>
-                    <td style="font-weight: 600;">${lead.nombre}</td>
+                    <td style="font-weight: 600;">${lead.name || lead.nombre}</td>
                     <td><a href="mailto:${lead.email}" style="color: var(--secondary); text-decoration: none;">${lead.email}</a></td>
                     <td>
-                        <span style="display: block; font-size: 0.85rem;">${lead.asunto}</span>
-                        <span style="font-size: 0.75rem; color: var(--secondary);">${lead.package}</span>
+                        <span style="display: block; font-size: 0.85rem;">${lead.asunto || 'Consulta'}</span>
+                        <span style="font-size: 0.75rem; color: var(--secondary);">${lead.package || 'IT Solution'}</span>
                     </td>
-                    <td style="max-width: 300px; white-space: pre-wrap; font-size: 0.85rem; color: #d0d0d0;">${lead.mensaje}</td>
-                    <td><span class="ip-badge">${lead.ip}</span></td>
+                    <td style="max-width: 300px; white-space: pre-wrap; font-size: 0.85rem; color: #d0d0d0;">${lead.message || lead.mensaje}</td>
+                    <td><span class="ip-badge">${lead.ip || 'Cloud'}</span></td>
                     <td><button class="btn-delete" onclick="deleteLead(${index})">Borrar</button></td>
                 </tr>
             `).join('');
         }
 
-        window.deleteLead = (index) => {
-            if (confirm('¿Seguro que quieres borrar este registro?')) {
-                const leads = JSON.parse(localStorage.getItem('nexa_leads')) || [];
-                leads.splice(index, 1);
-                localStorage.setItem('nexa_leads', JSON.stringify(leads));
-                renderLeads();
+        window.deleteLead = async (index) => {
+            if (confirm('¿Seguro que quieres borrar este registro en la nube?')) {
+                const leadToDelete = leads[index];
+                if (leadToDelete.id) {
+                    try {
+                        await deleteDoc(doc(db, 'leads', leadToDelete.id));
+                    } catch (error) {
+                        console.error("Error deleting lead:", error);
+                        alert("Error al borrar en Firebase.");
+                    }
+                } else {
+                    leads.splice(index, 1);
+                    localStorage.setItem('nexa_leads', JSON.stringify(leads));
+                    renderLeads();
+                }
             }
         };
 
         window.exportJSON = () => {
-            const leads = localStorage.getItem('nexa_leads');
-            const blob = new Blob([leads], { type: 'application/json' });
+            const blob = new Blob([JSON.stringify(leads, null, 2)], { type: 'application/json' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
             a.download = `nexa_leads_${new Date().toLocaleDateString()}.json`;
             a.click();
         };
+
+        // If already logged in this session
+        if (sessionStorage.getItem('nexa_admin') === 'true') {
+            authModal.style.display = 'none';
+            adminContent.style.display = 'block';
+            initRealtimeLeads();
+        }
     </script>
 </body>
 
