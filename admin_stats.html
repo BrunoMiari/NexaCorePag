@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Portal - NexaCore Analytics</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="index.css">
+    <style>
+        body {
+            background-color: #030d12;
+            color: white;
+            padding: 2rem;
+        }
+
+        .admin-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--glass-border);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1.5rem;
+            margin-bottom: 3rem;
+        }
+
+        .stat-card {
+            background: var(--glass);
+            padding: 2rem;
+            border-radius: 20px;
+            border: 1px solid var(--glass-border);
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--secondary);
+            margin-top: 0.5rem;
+        }
+
+        .stat-label {
+            color: var(--text-gray);
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .chart-container {
+            background: var(--glass);
+            padding: 2rem;
+            border-radius: 20px;
+            border: 1px solid var(--glass-border);
+            margin-top: 2rem;
+        }
+
+        .log-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+
+        .log-table th,
+        .log-table td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--glass-border);
+        }
+
+        .log-table th {
+            color: var(--text-gray);
+            font-size: 0.8rem;
+            text-transform: uppercase;
+        }
+
+        #auth-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #030d12;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+        }
+
+        .auth-box {
+            background: var(--glass);
+            padding: 3rem;
+            border-radius: 20px;
+            border: 1px solid var(--glass-border);
+            text-align: center;
+            width: 400px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="admin-container" id="admin-content">
+        <div class="header">
+            <div>
+                <h1>Analíticas de NexaCore</h1>
+                <p id="access-level" style="color: var(--text-gray); font-size: 0.9rem;">Cargando nivel de acceso...</p>
+            </div>
+            <div style="display: flex; gap: 15px;">
+                <button class="btn btn-dark btn-small" id="leads-btn" style="display:none;"
+                    onclick="window.location.href='admin_leads.html'">Ir a Leads</button>
+                <button class="btn btn-dark btn-small" onclick="window.location.href='index.html'">Volver Web</button>
+                <button id="reset-btn" class="btn btn-primary btn-small"
+                    style="background:#ff4d4d; border:none; display:none;" onclick="resetStats()">Resetear
+                    Datos</button>
+            </div>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-label">Visitas Totales</div>
+                <div id="total-visits" class="stat-value">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Visitantes Únicos</div>
+                <div id="unique-visitors" class="stat-value">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Consultas Recibidas</div>
+                <div id="total-queries" class="stat-value">0</div>
+            </div>
+        </div>
+
+        <div class="chart-container">
+            <h3>Tráfico por Día</h3>
+            <div id="daily-log" style="margin-top: 1.5rem;">
+                <table class="log-table">
+                    <thead>
+                        <tr>
+                            <th>Fecha</th>
+                            <th>Visitas</th>
+                            <th>Porcentaje</th>
+                        </tr>
+                    </thead>
+                    <tbody id="daily-body">
+                        <!-- Data injected here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Admin Only: Data Generation Panel -->
+        <div id="admin-gen-panel" class="chart-container"
+            style="display: none; border-color: var(--secondary); margin-top: 3rem; background: rgba(0, 168, 232, 0.02);">
+            <h3 style="color: var(--secondary); margin-bottom: 1.5rem;">🛠️ Panel de Generación (Solo Admin)</h3>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+                <!-- Visit Injector -->
+                <div>
+                    <h4 style="font-size: 0.9rem; margin-bottom: 1rem; color: var(--text-gray);">Inyectar Tráfico
+                        Simulado</h4>
+                    <div style="display: flex; gap: 10px; margin-bottom: 1rem;">
+                        <input type="date" id="gen-date" style="flex: 2;">
+                        <input type="number" id="gen-count" placeholder="Cant." style="flex: 1;" value="10">
+                    </div>
+                    <button class="btn btn-secondary btn-small w-100" onclick="injectVisits()">Inyectar Visitas</button>
+                </div>
+                <!-- Manual Overrides -->
+                <div>
+                    <h4 style="font-size: 0.9rem; margin-bottom: 1rem; color: var(--text-gray);">Sobrescribir Globales
+                    </h4>
+                    <div style="display: flex; gap: 10px; margin-bottom: 1rem;">
+                        <div style="flex: 1;">
+                            <label style="font-size: 0.7rem; color: var(--text-gray);">Totales</label>
+                            <input type="number" id="override-total">
+                        </div>
+                        <div style="flex: 1;">
+                            <label style="font-size: 0.7rem; color: var(--text-gray);">Únicos</label>
+                            <input type="number" id="override-unique">
+                        </div>
+                    </div>
+                    <button class="btn btn-outline btn-small w-100" onclick="updateTotals()">Actualizar Totales</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const adminContent = document.getElementById('admin-content');
+        const resetBtn = document.getElementById('reset-btn');
+        const leadsBtn = document.getElementById('leads-btn');
+        const accessLabel = document.getElementById('access-level');
+        const genPanel = document.getElementById('admin-gen-panel');
+
+        // Automatic session check
+        const isAdmin = sessionStorage.getItem('nexa_admin') === 'true';
+
+        function init() {
+            if (isAdmin) {
+                accessLabel.innerHTML = '<span style="color:var(--secondary); font-weight:700;">● MODO ADMINISTRADOR</span> (Acceso Completo)';
+                if (resetBtn) resetBtn.style.display = 'block';
+                if (leadsBtn) leadsBtn.style.display = 'block';
+                if (genPanel) genPanel.style.display = 'block';
+
+                // Populate current totals in overrides
+                const stats = JSON.parse(localStorage.getItem('nexa_stats')) || { totalVisits: 0, uniqueVisitors: 0 };
+                document.getElementById('override-total').value = stats.totalVisits;
+                document.getElementById('override-unique').value = stats.uniqueVisitors;
+                document.getElementById('gen-date').valueAsDate = new Date();
+
+                renderStats(true);
+            } else {
+                accessLabel.style.display = 'none'; // Hide label entirely in viewer mode
+                renderStats(false);
+            }
+        }
+
+        function renderStats(isFullAdmin) {
+            const stats = JSON.parse(localStorage.getItem('nexa_stats')) || { totalVisits: 0, uniqueVisitors: 0, dailyVisits: {} };
+            const leads = JSON.parse(localStorage.getItem('nexa_leads')) || [];
+
+            document.getElementById('total-visits').innerText = stats.totalVisits.toLocaleString();
+            document.getElementById('unique-visitors').innerText = stats.uniqueVisitors.toLocaleString();
+            document.getElementById('total-queries').innerText = leads.length;
+
+            const dailyBody = document.getElementById('daily-body');
+            const dates = Object.keys(stats.dailyVisits).sort((a, b) => new Date(b) - new Date(a));
+
+            dailyBody.innerHTML = dates.map(date => {
+                const visits = stats.dailyVisits[date];
+                const percent = stats.totalVisits > 0 ? ((visits / stats.totalVisits) * 100).toFixed(1) : 0;
+                return `
+                    <tr>
+                        <td style="font-weight: 500;">${date}</td>
+                        <td style="color: var(--secondary); font-weight: 600;">${visits}</td>
+                        <td>
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <div style="flex: 1; height: 8px; background: rgba(255,255,255,0.05); border-radius: 4px; overflow: hidden;">
+                                    <div style="width: ${percent}%; height: 100%; background: var(--secondary);"></div>
+                                </div>
+                                <span style="font-size: 0.8rem; color: var(--text-gray); width: 40px;">${percent}%</span>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }).join('') || '<tr><td colspan="3" style="text-align:center; color: var(--text-gray);">No hay datos todavía.</td></tr>';
+        }
+
+        window.injectVisits = () => {
+            const dateInput = document.getElementById('gen-date');
+            const countInput = document.getElementById('gen-count');
+
+            if (!dateInput.value) return alert('Selecciona una fecha');
+
+            // Format date to match localized format used by trackVisit
+            const [y, m, d] = dateInput.value.split('-');
+            const dateKey = `${parseInt(d)}/${parseInt(m)}/${y}`;
+
+            let stats = JSON.parse(localStorage.getItem('nexa_stats')) || { totalVisits: 0, uniqueVisitors: 0, dailyVisits: {} };
+            const count = parseInt(countInput.value) || 0;
+
+            stats.dailyVisits[dateKey] = (stats.dailyVisits[dateKey] || 0) + count;
+            stats.totalVisits += count;
+            // Randomly increase unique visitors (between 30-70% of new visits)
+            stats.uniqueVisitors += Math.floor(count * (0.3 + Math.random() * 0.4));
+
+            localStorage.setItem('nexa_stats', JSON.stringify(stats));
+            renderStats(true);
+
+            // Update override inputs to match new counts
+            document.getElementById('override-total').value = stats.totalVisits;
+            document.getElementById('override-unique').value = stats.uniqueVisitors;
+
+            alert(`Inyectadas ${count} visitas para el día ${dateKey}`);
+        };
+
+        window.updateTotals = () => {
+            const total = parseInt(document.getElementById('override-total').value);
+            const unique = parseInt(document.getElementById('override-unique').value);
+
+            let stats = JSON.parse(localStorage.getItem('nexa_stats')) || { totalVisits: 0, uniqueVisitors: 0, dailyVisits: {} };
+            stats.totalVisits = total;
+            stats.uniqueVisitors = unique;
+
+            localStorage.setItem('nexa_stats', JSON.stringify(stats));
+            renderStats(true);
+            alert('Totales globales actualizados.');
+        };
+
+        function resetStats() {
+            if (confirm('¿Estás SEGURO de que quieres borrar TODOS los datos de analítica? Esta acción no se puede deshacer.')) {
+                localStorage.removeItem('nexa_stats');
+                renderStats(true);
+                alert('Estadísticas reseteadas correctamente.');
+            }
+        }
+
+        init();
+    </script>
+</body>
+
+</html>

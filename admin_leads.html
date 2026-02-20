@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Portal - NexaCore Leads</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="index.css">
+    <style>
+        body {
+            background-color: #030d12;
+            color: white;
+            padding: 2rem;
+        }
+
+        .admin-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--glass-border);
+        }
+
+        .leads-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: var(--glass);
+            border-radius: 12px;
+            overflow: hidden;
+            margin-top: 1rem;
+        }
+
+        .leads-table th,
+        .leads-table td {
+            padding: 1.2rem;
+            text-align: left;
+            border-bottom: 1px solid var(--glass-border);
+            font-size: 0.9rem;
+        }
+
+        .leads-table th {
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--secondary);
+            font-weight: 600;
+        }
+
+        .leads-table tr:hover {
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .ip-badge {
+            background: rgba(0, 168, 232, 0.1);
+            color: var(--secondary);
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 0.8rem;
+        }
+
+        .btn-delete {
+            background: rgba(255, 77, 77, 0.1);
+            color: #ff4d4d;
+            border: 1px solid rgba(255, 77, 77, 0.2);
+            padding: 0.4rem 0.8rem;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-delete:hover {
+            background: #ff4d4d;
+            color: white;
+        }
+
+        #auth-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #030d12;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+        }
+
+        .auth-box {
+            background: var(--glass);
+            padding: 3rem;
+            border-radius: 20px;
+            border: 1px solid var(--glass-border);
+            text-align: center;
+            width: 400px;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="auth-modal">
+        <div class="auth-box">
+            <h2 style="margin-bottom: 1.5rem;">Panel de Administración</h2>
+            <p style="color: var(--text-gray); margin-bottom: 2rem;">Introduzca el pin para acceder a los leads.</p>
+            <form id="auth-form">
+                <input type="password" id="admin-pass" placeholder="Password"
+                    style="width: 100%; padding: 1rem; background: var(--bg-light); border: 1px solid var(--glass-border); color: white; border-radius: 10px; margin-bottom: 1rem; text-align: center;">
+                <button type="submit" class="btn btn-primary w-100">Entrar</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="admin-container" id="admin-content" style="display: none;">
+        <div class="header">
+            <h1>Gestor de Clientes (Leads)</h1>
+            <div style="gap: 15px; display: flex;">
+                <button class="btn btn-outline" onclick="window.location.href='admin_stats.html'">Ver
+                    Analíticas</button>
+                <button class="btn btn-outline" onclick="exportJSON()">Exportar JSON</button>
+                <button class="btn btn-outline" onclick="window.location.href='index.html'">Volver a la Web</button>
+            </div>
+        </div>
+
+        <div class="stats-grid"
+            style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; margin-bottom: 2rem;">
+            <div class="stat-box"
+                style="background: var(--glass); padding: 1.5rem; border-radius: 15px; border: 1px solid var(--glass-border);">
+                <span style="color: var(--text-gray); font-size: 0.8rem;">Total Consultas</span>
+                <div id="total-leads" style="font-size: 2rem; font-weight: 700;">0</div>
+            </div>
+        </div>
+
+        <table class="leads-table">
+            <thead>
+                <tr>
+                    <th>Fecha</th>
+                    <th>Nombre</th>
+                    <th>Email</th>
+                    <th>Asunto / Paquete</th>
+                    <th>Mensaje</th>
+                    <th>Dirección IP</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody id="leads-body"></tbody>
+        </table>
+    </div>
+
+    <script>
+        const authForm = document.getElementById('auth-form');
+        const authModal = document.getElementById('auth-modal');
+        const adminContent = document.getElementById('admin-content');
+
+        authForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const pass = document.getElementById('admin-pass').value;
+            if (pass === 'Bruno2008') {
+                authModal.style.display = 'none';
+                adminContent.style.display = 'block';
+                renderLeads();
+            } else {
+                alert('Acceso denegado.');
+            }
+        });
+
+        function renderLeads() {
+            const leads = JSON.parse(localStorage.getItem('nexa_leads')) || [];
+            const body = document.getElementById('leads-body');
+            document.getElementById('total-leads').innerText = leads.length;
+
+            body.innerHTML = leads.map((lead, index) => `
+                <tr>
+                    <td style="color: var(--text-gray); font-size: 0.8rem;">${lead.date}</td>
+                    <td style="font-weight: 600;">${lead.nombre}</td>
+                    <td><a href="mailto:${lead.email}" style="color: var(--secondary); text-decoration: none;">${lead.email}</a></td>
+                    <td>
+                        <span style="display: block; font-size: 0.85rem;">${lead.asunto}</span>
+                        <span style="font-size: 0.75rem; color: var(--secondary);">${lead.package}</span>
+                    </td>
+                    <td style="max-width: 300px; white-space: pre-wrap; font-size: 0.85rem; color: #d0d0d0;">${lead.mensaje}</td>
+                    <td><span class="ip-badge">${lead.ip}</span></td>
+                    <td><button class="btn-delete" onclick="deleteLead(${index})">Borrar</button></td>
+                </tr>
+            `).join('');
+        }
+
+        window.deleteLead = (index) => {
+            if (confirm('¿Seguro que quieres borrar este registro?')) {
+                const leads = JSON.parse(localStorage.getItem('nexa_leads')) || [];
+                leads.splice(index, 1);
+                localStorage.setItem('nexa_leads', JSON.stringify(leads));
+                renderLeads();
+            }
+        };
+
+        window.exportJSON = () => {
+            const leads = localStorage.getItem('nexa_leads');
+            const blob = new Blob([leads], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `nexa_leads_${new Date().toLocaleDateString()}.json`;
+            a.click();
+        };
+    </script>
+</body>
+
+</html>

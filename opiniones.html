@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Opiniones Clientes | NexaCoreSystems & IT</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="index.css">
+</head>
+
+<body class="bg-dark">
+    <header>
+        <nav class="container">
+            <div class="logo">
+                <span class="logo-icon">N</span>
+                <span class="logo-text">NEXACORE<span>SYSTEMS & IT</span></span>
+            </div>
+            <ul class="nav-links">
+                <li><a href="index.html#servicios">Servicios</a></li>
+                <li><a href="index.html#plataforma">Plataforma</a></li>
+                <li><a href="#" class="active">Opiniones</a></li>
+                <li><a href="index.html#faq">FAQ</a></li>
+            </ul>
+            <a href="contacto.html" class="btn btn-primary">Empieza Ahora</a>
+        </nav>
+    </header>
+
+    <main style="padding-top: 120px; min-height: 80vh;">
+        <section class="container">
+            <div class="section-title">
+                <h1>Lo que nuestros clientes dicen</h1>
+                <p>Opiniones reales de empresas reales que confían en NexaCore.</p>
+            </div>
+
+            <div id="reviews-container" class="reviews-grid">
+                <!-- Las reseñas se cargarán dinámicamente -->
+            </div>
+
+            <div style="text-align: center; margin-top: 3rem;">
+                <a href="index.html" class="btn btn-outline">Volver al Inicio</a>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="container footer-grid">
+            <div class="footer-brand">
+                <div class="logo">
+                    <span class="logo-icon">N</span>
+                    <span class="logo-text">NEXACORE</span>
+                </div>
+                <p>Expertos en sistemas e infraestructura tecnológica.</p>
+            </div>
+            <div class="footer-links">
+                <h4>Navegación</h4>
+                <ul>
+                    <li><a href="index.html#servicios">Servicios</a></li>
+                    <li><a href="index.html#tienda">Tienda</a></li>
+                    <li><a href="index.html#faq">FAQ</a></li>
+                </ul>
+            </div>
+            <div class="footer-contact">
+                <h4>Contacto</h4>
+                <p>info@nexacoresystems.com</p>
+                <div class="socials">
+                    <a href="#">LI</a>
+                    <a href="#">TW</a>
+                    <a href="#">FB</a>
+                    <button id="admin-login-btn"
+                        style="background:none; border:none; color:var(--text-gray); font-size: 0.7rem; cursor:pointer; opacity: 0.3;">Admin</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Admin Modal -->
+        <div id="admin-modal" class="modal">
+            <div class="modal-content">
+                <span class="close">&times;</span>
+                <h3>Acceso Administrador</h3>
+                <form id="admin-login-form">
+                    <input type="text" id="admin-user" placeholder="Usuario" required>
+                    <input type="password" id="admin-pass" placeholder="Contraseña" required>
+                    <button type="submit" class="btn btn-primary">Entrar</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Edit Review Modal -->
+        <div id="edit-modal" class="modal">
+            <div class="modal-content">
+                <span class="close-edit">&times;</span>
+                <h3>Editar Reseña</h3>
+                <form id="edit-review-form">
+                    <input type="hidden" id="edit-index">
+                    <div class="form-group">
+                        <label>Usuario</label>
+                        <input type="text" id="edit-name" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Fecha/Hora</label>
+                        <input type="text" id="edit-date" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Valoración</label>
+                        <select id="edit-rating">
+                            <option value="5">5 Estrellas</option>
+                            <option value="4">4 Estrellas</option>
+                            <option value="3">3 Estrellas</option>
+                            <option value="2">2 Estrellas</option>
+                            <option value="1">1 Estrella</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+                </form>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <div class="container">
+                <p>&copy; 2026 NexaCoreSystems & IT. Todos los derechos reservados.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="main.js"></script>
+</body>
+
+</html>

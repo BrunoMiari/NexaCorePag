@@ -1,0 +1,1126 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NexaCore MSP | Demo Simulation</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="index.css">
+    <style>
+        :root {
+            --sidebar-width: 250px;
+            --demo-accent: #00A8E8;
+            --demo-success: #00ffaa;
+            --demo-warning: #ffcc00;
+            --demo-danger: #ff4d4d;
+        }
+
+        body {
+            background-color: #030d12;
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* --- Sidebar --- */
+        .sidebar {
+            width: var(--sidebar-width);
+            background: rgba(5, 25, 35, 0.9);
+            border-right: 1px solid var(--glass-border);
+            display: flex;
+            flex-direction: column;
+            padding: 2rem 0;
+            z-index: 1001;
+        }
+
+        .sidebar-logo {
+            padding: 0 2rem;
+            margin-bottom: 3rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .sidebar-nav {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .nav-item {
+            padding: 1rem 2rem;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: var(--text-gray);
+            cursor: pointer;
+            transition: var(--transition);
+            border-left: 3px solid transparent;
+        }
+
+        .nav-item:hover,
+        .nav-item.active {
+            background: rgba(0, 168, 232, 0.1);
+            color: var(--text-white);
+            border-left-color: var(--demo-accent);
+        }
+
+        .nav-item span.icon {
+            font-size: 1.2rem;
+        }
+
+        /* --- Main Content --- */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .top-bar {
+            height: 70px;
+            background: rgba(5, 25, 35, 0.5);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--glass-border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 3rem;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-shrink: 0;
+        }
+
+        .avatar {
+            width: 35px;
+            height: 35px;
+            background: var(--demo-accent);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.8rem;
+        }
+
+        .content-area {
+            flex: 1;
+            padding: 5rem 3rem 3rem 3rem;
+            /* Increased top padding to avoid overlap */
+            overflow-y: auto;
+        }
+
+        /* --- Chat Modal --- */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            backdrop-filter: blur(5px);
+        }
+
+        .chat-modal {
+            background: #051923;
+            width: 600px;
+            border-radius: 20px;
+            border: 1px solid var(--glass-border);
+            display: flex;
+            flex-direction: column;
+            max-height: 80vh;
+        }
+
+        .chat-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--glass-border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .chat-history {
+            flex: 1;
+            padding: 1.5rem;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .chat-bubble {
+            padding: 1rem;
+            border-radius: 12px;
+            max-width: 80%;
+            font-size: 0.9rem;
+        }
+
+        .chat-bubble.user {
+            background: rgba(255, 255, 255, 0.05);
+            align-self: flex-start;
+            border-bottom-left-radius: 2px;
+        }
+
+        .chat-bubble.admin {
+            background: rgba(0, 168, 232, 0.1);
+            color: var(--text-white);
+            align-self: flex-end;
+            border-bottom-right-radius: 2px;
+            border: 1px solid rgba(0, 168, 232, 0.2);
+        }
+
+        .chat-input-area {
+            padding: 1.5rem;
+            border-top: 1px solid var(--glass-border);
+            display: flex;
+            gap: 10px;
+        }
+
+        .chat-input {
+            flex: 1;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--glass-border);
+            border-radius: 10px;
+            padding: 0.8rem;
+            color: white;
+        }
+
+        /* --- Ticket Specialized Buttons --- */
+        .btn-ticket-primary {
+            background: rgba(0, 168, 232, 0.1);
+            color: var(--demo-accent);
+            border: 1px solid rgba(0, 168, 232, 0.3);
+            padding: 0.4rem 0.8rem;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-ticket-primary:hover {
+            background: var(--demo-accent);
+            color: white;
+            box-shadow: 0 0 15px rgba(0, 168, 232, 0.4);
+        }
+
+        .btn-ticket-danger {
+            background: rgba(255, 77, 77, 0.1);
+            color: var(--demo-danger);
+            border: 1px solid rgba(255, 77, 77, 0.3);
+            padding: 0.4rem 0.8rem;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-ticket-danger:hover {
+            background: var(--demo-danger);
+            color: white;
+            box-shadow: 0 0 15px rgba(255, 77, 77, 0.4);
+        }
+
+        /* --- Device Badge Refinement --- */
+        .device-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--glass-border);
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            color: var(--text-gray);
+            transition: all 0.3s ease;
+        }
+
+        .device-tag i {
+            font-size: 0.9rem;
+            color: var(--demo-accent);
+        }
+
+        .device-tag.active {
+            border-color: rgba(0, 168, 232, 0.3);
+            background: rgba(0, 168, 232, 0.05);
+            color: var(--text-white);
+        }
+
+        .view {
+            display: none;
+            animation: fadeIn 0.4s ease;
+        }
+
+        .view.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* --- Dashboard Grid --- */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        .stat-box {
+            background: var(--glass);
+            border: 1px solid var(--glass-border);
+            padding: 1.5rem;
+            border-radius: 16px;
+        }
+
+        .stat-box .label {
+            color: var(--text-gray);
+            font-size: 0.85rem;
+            margin-bottom: 0.5rem;
+            display: block;
+        }
+
+        .stat-box .value {
+            font-size: 1.8rem;
+            font-weight: 700;
+        }
+
+        .stat-box.danger .value {
+            color: var(--demo-danger);
+        }
+
+        .stat-box.success .value {
+            color: var(--demo-success);
+        }
+
+        /* --- Device Table --- */
+        .data-card {
+            background: var(--glass);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 2rem;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+
+        th {
+            text-align: left;
+            color: var(--text-gray);
+            font-size: 0.85rem;
+            padding: 1rem;
+            border-bottom: 1px solid var(--glass-border);
+        }
+
+        td {
+            padding: 1.2rem 1rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+            font-size: 0.95rem;
+        }
+
+        .status-pill {
+            padding: 0.3rem 0.8rem;
+            border-radius: 50px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        .status-pill.online {
+            background: rgba(0, 255, 170, 0.1);
+            color: var(--demo-success);
+        }
+
+        .status-pill.offline {
+            background: rgba(255, 77, 77, 0.1);
+            color: var(--demo-danger);
+        }
+
+        /* --- Terminal Emulator --- */
+        .terminal {
+            background: #0a1114;
+            border-radius: 12px;
+            padding: 1.5rem;
+            font-family: 'Courier New', Courier, monospace;
+            color: #00ffaa;
+            height: 300px;
+            overflow-y: auto;
+            margin-top: 1.5rem;
+            border: 1px solid #1a2a30;
+        }
+
+        .terminal-line {
+            margin-bottom: 0.5rem;
+            opacity: 0;
+            animation: typeIn 0.2s forwards;
+        }
+
+        @keyframes typeIn {
+            to {
+                opacity: 1;
+            }
+        }
+
+        /* --- Resource Visualization --- */
+        .device-detail {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 3rem;
+        }
+
+        .resource-bars {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .progress-bar-container {
+            flex: 1;
+            height: 8px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            position: relative;
+        }
+
+        .progress-bar {
+            height: 100%;
+            border-radius: 10px;
+            transition: width 1s ease;
+        }
+
+        /* --- Tickets --- */
+        .ticket-item {
+            background: rgba(255, 255, 255, 0.03);
+            padding: 1.5rem;
+            border-radius: 12px;
+            margin-bottom: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .ticket-priority {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+        }
+
+        .high {
+            background: var(--demo-danger);
+        }
+
+        .medium {
+            background: var(--demo-warning);
+        }
+
+        .active-play {
+            background: rgba(0, 255, 170, 0.2) !important;
+            border-color: var(--demo-success) !important;
+        }
+    </style>
+</head>
+
+<body>
+
+    <aside class="sidebar">
+        <div class="sidebar-logo">
+            <div class="logo-icon">N</div>
+            <div class="logo-text">NexaCore<span>MSP PORTAL</span></div>
+        </div>
+        <div class="sidebar-nav">
+            <div class="nav-item active" onclick="showView('dashboard')">
+                <span class="icon">📊</span> Panel General
+            </div>
+            <div class="nav-item" onclick="showView('inventory')">
+                <span class="icon">🖥️</span> Inventario
+            </div>
+            <div class="nav-item" onclick="showView('scripts')">
+                <span class="icon">📜</span> Automatización
+            </div>
+            <div class="nav-item" onclick="showView('tickets')">
+                <span class="icon">🎟️</span> Tickets
+            </div>
+        </div>
+        <div class="nav-item" style="margin-top: auto;" onclick="window.location.href='index.html'">
+            <span class="icon">🚪</span> Salir de Demo
+        </div>
+    </aside>
+
+    <main class="main-content">
+        <header class="top-bar">
+            <div class="header-left">
+                <span class="status-pill online">Sistema Operativo</span>
+                <div class="search-box">
+                    <input type="text" placeholder="Buscar dispositivo, ticket o script..."
+                        style="width: 300px; border-radius: 20px;">
+                </div>
+            </div>
+            <div class="user-info">
+                <div class="avatar">AD</div>
+                <span style="font-weight: 500;">Admin Demo</span>
+            </div>
+        </header>
+
+        <section class="content-area">
+
+            <!-- Dashboard View -->
+            <div id="dashboard" class="view active">
+                <h2 style="margin-bottom: 2rem;">Estado del Sistema</h2>
+                <div class="stats-grid">
+                    <div class="stat-box">
+                        <span class="label">Total Endpoints</span>
+                        <div id="stat-endpoints" class="value">0</div>
+                    </div>
+                    <div class="stat-box danger">
+                        <span class="label">Alertas Críticas</span>
+                        <div id="stat-alerts" class="value">0</div>
+                    </div>
+                    <div class="stat-box success">
+                        <span class="label">Parches al Día</span>
+                        <div class="value">98.2%</div>
+                    </div>
+                    <div class="stat-box">
+                        <span class="label">Tickets Pendientes</span>
+                        <div id="stat-tickets" class="value">0</div>
+                    </div>
+                </div>
+
+                <div class="data-card">
+                    <h3>Actividad Reciente</h3>
+                    <div class="terminal" id="main-terminal">
+                        <div class="terminal-line">> NexaCore Agent v4.2 ha iniciado...</div>
+                        <div class="terminal-line">> Escaneando vulnerabilidades en Red-Alpha...</div>
+                        <div class="terminal-line">> 12 parches KB5034123 instalados con éxito.</div>
+                        <div class="terminal-line">> Alerta: Detectada degradación de disco en Servidor-DB-01</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Inventory View -->
+            <div id="inventory" class="view">
+                <h2 style="margin-bottom: 2rem;">Inventario de Dispositivos</h2>
+                <div class="data-card">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Nombre</th>
+                                <th>Estado</th>
+                                <th>IP</th>
+                                <th>S.O.</th>
+                                <th>Recursos</th>
+                            </tr>
+                        </thead>
+                        <tbody id="device-body">
+                            <!-- JS Will populate -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <div id="device-details-box" class="data-card" style="margin-top: 2rem; display: none;">
+                    <h3>Detalle de Recursos: <span id="detail-name"></span></h3>
+                    <div class="device-detail" style="margin-top: 1.5rem;">
+                        <div style="text-align: center;">
+                            <div style="font-size: 0.85rem; color: var(--text-gray); margin-bottom: 1rem;">ESPACIO EN
+                                DISCO</div>
+                            <svg width="120" height="120">
+                                <circle cx="60" cy="60" r="50" fill="none" stroke="rgba(255,255,255,0.05)"
+                                    stroke-width="10" />
+                                <circle id="disk-circle" cx="60" cy="60" r="50" fill="none" stroke="var(--demo-accent)"
+                                    stroke-width="10" stroke-dasharray="314" stroke-dashoffset="100" />
+                            </svg>
+                            <div id="disk-text" style="font-weight: 700; margin-top: -70px; margin-bottom: 50px;">75%
+                            </div>
+                        </div>
+                        <div class="resource-bars">
+                            <div>
+                                <div
+                                    style="display: flex; justify-content: space-between; font-size: 0.8rem; margin-bottom: 0.5rem;">
+                                    <span>Carga de CPU</span>
+                                    <span id="cpu-text">42%</span>
+                                </div>
+                                <div class="progress-bar-container">
+                                    <div id="cpu-bar" class="progress-bar"
+                                        style="width: 42%; background: var(--demo-success);"></div>
+                                </div>
+                            </div>
+                            <div>
+                                <div
+                                    style="display: flex; justify-content: space-between; font-size: 0.8rem; margin-bottom: 0.5rem;">
+                                    <span>Uso de RAM</span>
+                                    <span id="ram-text">8.2 GB / 16 GB</span>
+                                </div>
+                                <div class="progress-bar-container">
+                                    <div id="ram-bar" class="progress-bar"
+                                        style="width: 51%; background: var(--demo-accent);"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Scripts View -->
+            <div id="scripts" class="view">
+                <h2 style="margin-bottom: 2rem;">Biblioteca de Automatización</h2>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+                    <div class="data-card">
+                        <div style="margin-bottom: 1.5rem;">
+                            <label
+                                style="display: block; font-size: 0.9rem; margin-bottom: 0.5rem; color: var(--text-gray);">
+                                Seleccionar Equipo Destino:
+                            </label>
+                            <select id="device-selector"
+                                style="width: 100%; background: var(--bg-light); border: 1px solid var(--glass-border); color: var(--text-white); padding: 0.5rem; border-radius: 8px;">
+                                <!-- Online devices will be populated here -->
+                            </select>
+                        </div>
+                        <h3>Scripts Disponibles</h3>
+                        <div class="ticket-item" onclick="runScript('Limpiar Caché de Sistema')">
+                            <span>🧹 Limpiar Caché de Sistema</span>
+                            <button class="btn btn-primary btn-small">Ejecutar</button>
+                        </div>
+                        <div class="ticket-item" onclick="runScript('Auditar Software No Autorizado')">
+                            <span>🔍 Auditar Software</span>
+                            <button class="btn btn-primary btn-small">Ejecutar</button>
+                        </div>
+                        <div class="ticket-item" onclick="runScript('Reiniciar Cola de Impresión')">
+                            <span>🖨️ Reiniciar Impresión</span>
+                            <button class="btn btn-primary btn-small">Ejecutar</button>
+                        </div>
+                    </div>
+                    <div class="data-card">
+                        <h3>Salida de Consola</h3>
+                        <div class="terminal" id="script-terminal">
+                            <div class="terminal-line">> Esperando ejecución...</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tickets View -->
+            <div id="tickets" class="view">
+                <h2 style="margin-bottom: 2rem;">Gestor de Tickets</h2>
+                <div class="data-card" id="ticket-container">
+                    <!-- Tickets will be rendered here -->
+                </div>
+            </div>
+
+        </section>
+    </main>
+
+    <div id="chat-modal" class="modal-overlay">
+        <div class="chat-modal">
+            <div class="chat-header">
+                <div>
+                    <h3 id="chat-title" style="margin-bottom: 5px;">Ticket Management</h3>
+                    <div id="chat-device-container">
+                        <!-- Device tag will be injected here -->
+                    </div>
+                </div>
+                <div style="text-align: right; border-left: 1px solid var(--glass-border); padding-left: 1.5rem;">
+                    <div id="chat-user-info" style="font-size: 0.85rem; font-weight: 600; color: var(--text-white);">
+                        Reporter: --</div>
+                    <div id="chat-time-info" style="font-size: 0.75rem; color: var(--text-gray); margin-top: 2px;">
+                        Abierto a las: --:--</div>
+                </div>
+                <button class="btn btn-outline btn-small" onclick="closeChat()" style="margin-left: 1.5rem;">X</button>
+            </div>
+            <div id="chat-history" class="chat-history">
+                <!-- Messages will be rendered here -->
+            </div>
+            <div class="chat-input-area">
+                <input type="text" id="chat-input" class="chat-input" placeholder="Escribe un mensaje...">
+                <button class="btn btn-primary" onclick="sendChatMessage()">Responder</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="resolve-modal" class="modal-overlay">
+        <div class="chat-modal" style="height: auto; min-height: 400px;">
+            <div class="chat-header">
+                <div>
+                    <h3>Resolución de Ticket</h3>
+                    <span id="resolve-subtitle" style="font-size: 0.8rem; color: var(--text-gray);"></span>
+                </div>
+                <button class="btn btn-outline btn-small" onclick="closeResolve()">X</button>
+            </div>
+            <div style="padding: 2rem;">
+                <div
+                    style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem; background: rgba(255,255,255,0.02); padding: 1rem; border-radius: 10px; border: 1px solid var(--glass-border);">
+                    <div>
+                        <label
+                            style="display: block; font-size: 0.75rem; color: var(--text-gray); margin-bottom: 0.3rem;">Hora
+                            Apertura</label>
+                        <div id="resolve-open-time" style="font-size: 0.9rem; font-weight: 600;">--:--:--</div>
+                    </div>
+                    <div>
+                        <label
+                            style="display: block; font-size: 0.75rem; color: var(--text-gray); margin-bottom: 0.3rem;">Hora
+                            Cierre</label>
+                        <div id="resolve-close-time"
+                            style="font-size: 0.9rem; font-weight: 600; color: var(--demo-success);">--:--:--</div>
+                    </div>
+                    <div>
+                        <label
+                            style="display: block; font-size: 0.75rem; color: var(--text-gray); margin-bottom: 0.3rem;">Solicitado
+                            por</label>
+                        <div id="resolve-user-opened" style="font-size: 0.9rem; font-weight: 600;">--</div>
+                    </div>
+                    <div>
+                        <label
+                            style="display: block; font-size: 0.75rem; color: var(--text-gray); margin-bottom: 0.3rem;">Cerrado
+                            por</label>
+                        <div style="font-size: 0.9rem; font-weight: 600; color: var(--demo-accent);">Admin demo</div>
+                    </div>
+                </div>
+                <div style="margin-bottom: 1.5rem;">
+                    <label
+                        style="display: block; font-size: 0.85rem; color: var(--text-gray); margin-bottom: 0.5rem;">Tiempo
+                        Transcurrido:</label>
+                    <div id="resolve-time" style="font-size: 1.2rem; font-weight: 700; color: var(--demo-accent);">
+                        00:00:00</div>
+                </div>
+                <div style="margin-bottom: 1.5rem;">
+                    <label
+                        style="display: block; font-size: 0.85rem; color: var(--text-gray); margin-bottom: 0.5rem;">Notas
+                        de Resolución:</label>
+                    <textarea id="resolve-notes"
+                        style="width: 100%; height: 100px; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); border-radius: 10px; padding: 1rem; color: white; resize: none;"
+                        placeholder="Describe qué se hizo para solucionar el problema..."></textarea>
+                </div>
+                <button class="btn btn-primary w-100" onclick="confirmResolution()">Confirmar Resolución y Cerrar
+                    Ticket</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Track visit to demo
+        (function () {
+            let stats = JSON.parse(localStorage.getItem('nexa_stats')) || { totalVisits: 0, uniqueVisitors: 0, dailyVisits: {} };
+            const today = new Date().toLocaleDateString();
+            stats.totalVisits++;
+            if (!sessionStorage.getItem('nexa_visited')) {
+                stats.uniqueVisitors++;
+                sessionStorage.setItem('nexa_visited', 'true');
+            }
+            stats.dailyVisits[today] = (stats.dailyVisits[today] || 0) + 1;
+            localStorage.setItem('nexa_stats', JSON.stringify(stats));
+        })();
+
+        const devices = [
+            { name: 'WS-DESIGN-01', status: 'online', ip: '192.168.1.45', os: 'Windows 11', cpu: 12, ram: '4.2/16', disk: 30 },
+            { name: 'SRV-STORAGE', status: 'online', ip: '10.0.5.2', os: 'Ubuntu 22.04', cpu: 65, ram: '14/32', disk: 88 },
+            { name: 'LAPTOP-CEO', status: 'offline', ip: '192.168.1.102', os: 'macOS Sonoma', cpu: 0, ram: '0/16', disk: 45 },
+            { name: 'WS-ACCOUNT-04', status: 'online', ip: '192.168.1.56', os: 'Windows 10', cpu: 25, ram: '6/8', disk: 92 },
+            { name: 'Laptop-Acer-X23', status: 'online', ip: '192.168.1.88', os: 'Windows 11', cpu: 45, ram: '8/16', disk: 62 }
+        ];
+
+        function showView(viewId) {
+            document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+
+            document.getElementById(viewId).classList.add('active');
+            event.currentTarget.classList.add('active');
+        }
+
+        function populateDevices() {
+            const body = document.getElementById('device-body');
+            body.innerHTML = devices.map((d, index) => `
+                <tr onclick="showDeviceDetail(${index})" style="cursor:pointer">
+                    <td><strong>${d.name}</strong></td>
+                    <td><span class="status-pill ${d.status}">${d.status}</span></td>
+                    <td>${d.ip}</td>
+                    <td>${d.os}</td>
+                    <td><span style="color:var(--demo-accent)">Ver más</span></td>
+                </tr>
+            `).join('');
+        }
+
+        function showDeviceDetail(index) {
+            const d = devices[index];
+            document.getElementById('device-details-box').style.display = 'block';
+            document.getElementById('detail-name').innerText = d.name;
+
+            // Stats
+            document.getElementById('cpu-text').innerText = d.cpu + '%';
+            document.getElementById('cpu-bar').style.width = d.cpu + '%';
+            document.getElementById('cpu-bar').style.background = d.cpu > 80 ? 'var(--demo-danger)' : 'var(--demo-success)';
+
+            document.getElementById('ram-text').innerText = d.ram + ' GB';
+            const ramPercent = (parseFloat(d.ram.split('/')[0]) / parseFloat(d.ram.split('/')[1])) * 100;
+            document.getElementById('ram-bar').style.width = ramPercent + '%';
+
+            // Circular progress for disk
+            const circle = document.getElementById('disk-circle');
+            const offset = 314 - (314 * d.disk / 100);
+            circle.style.strokeDashoffset = offset;
+            circle.style.strokeDashoffset = offset;
+            document.getElementById('disk-text').innerText = d.disk + '%';
+        }
+
+        function populateDeviceSelector() {
+            const selector = document.getElementById('device-selector');
+            if (!selector) return;
+            const onlineDevices = devices.filter(d => d.status === 'online');
+            selector.innerHTML = onlineDevices.map(d => `
+                <option value="${d.name}">${d.name} (${d.ip})</option>
+            `).join('');
+        }
+
+        function runScript(name) {
+            const selector = document.getElementById('device-selector');
+            const targetName = selector ? selector.value : 'Dispositivo Desconocido';
+            const targetDevice = devices.find(d => d.name === targetName);
+            const targetIp = targetDevice ? targetDevice.ip : '0.0.0.0';
+
+            const term = document.getElementById('script-terminal');
+            term.innerHTML = `<div class="terminal-line" style="color: var(--demo-accent)">> Conectando a ${targetName} [${targetIp}]...</div>`;
+
+            setTimeout(() => {
+                const line = document.createElement('div');
+                line.className = 'terminal-line';
+                line.style.color = 'var(--demo-success)';
+                line.innerText = `> [SUCCESS] Dispositivo ${targetName} conectado.`;
+                term.appendChild(line);
+
+                const startLine = document.createElement('div');
+                startLine.className = 'terminal-line';
+                startLine.innerText = `> Iniciando script: ${name}...`;
+                term.appendChild(startLine);
+            }, 600);
+
+            const steps = [
+                `> Verificando permisos en ${targetName}... OK`,
+                `> Ejecutando proceso de ${name}...`,
+                `> Transfiriendo registros a consola central...`,
+                `> [SUCCESS] Script finalizado en ${targetName}.`
+            ];
+
+            steps.forEach((s, i) => {
+                setTimeout(() => {
+                    const line = document.createElement('div');
+                    line.className = 'terminal-line';
+                    line.innerText = s;
+                    term.appendChild(line);
+                    term.scrollTop = term.scrollHeight;
+                }, (i + 1) * 800);
+            });
+        }
+
+        // Simulating the main terminal typing
+        function startMainTerminal() {
+            const term = document.getElementById('main-terminal');
+            setInterval(() => {
+                const logs = [
+                    "> Auditando puertos abiertos en FW-HQ-01...",
+                    "> Check de integridad completado: No se encontraron errores.",
+                    "> Backup incremental iniciado: Site-Madrid",
+                    "> Dispositivo WS-DEV-09 se ha conectado."
+                ];
+                const line = document.createElement('div');
+                line.className = 'terminal-line';
+                line.innerText = `> ${logs[Math.floor(Math.random() * logs.length)]}`;
+                term.appendChild(line);
+                if (term.children.length > 15) term.removeChild(term.children[0]);
+                term.scrollTop = term.scrollHeight;
+            }, 3000);
+        }
+
+        // Create and update tickets dynamically
+        let tickets = [
+            {
+                id: 101,
+                title: 'Error de acceso VPN - Dept. Ventas',
+                user: 'Maria Garcia',
+                priority: 'high',
+                status: 'Urgent',
+                device: 'Laptop-Acer-X23',
+                createdAt: new Date(Date.now() - 3600000 * 2), // 2 hours ago
+                history: [
+                    { role: 'user', text: 'No puedo conectar a la VPN desde esta mañana. Da error 807.' }
+                ]
+            },
+            {
+                id: 102,
+                title: 'Lentitud en Photoshop - Marketing',
+                user: 'Carlos Ruiz',
+                priority: 'medium',
+                status: 'Pending',
+                device: null,
+                createdAt: new Date(Date.now() - 3600000 * 0.5), // 30 mins ago
+                history: [
+                    { role: 'user', text: 'Photoshop tarda más de 5 minutos en abrir cualquier archivo.' }
+                ]
+            }
+        ];
+
+        let activeTicketId = null;
+
+        function renderTickets() {
+            const container = document.getElementById('ticket-container');
+            container.innerHTML = tickets.map(t => `
+                <div class="ticket-item" id="ticket-${t.id}">
+                    <div style="display: flex; align-items: center; gap: 15px;">
+                        <div class="ticket-priority ${t.priority}"></div>
+                        <div>
+                            <div style="font-weight: 600;">${t.title}</div>
+                            <div style="font-size: 0.8rem; color: var(--text-gray);">Reportado por: ${t.user}</div>
+                        </div>
+                    </div>
+                    <div style="display: flex; gap: 10px; align-items: center;">
+                        <span class="status-pill ${t.status === 'Urgent' ? 'offline' : 'online'}" 
+                              style="${t.status === 'Pending' ? 'background: rgba(255,204,0,0.1); color: var(--demo-warning);' : ''}">
+                            ${t.status}
+                        </span>
+                        <button class="btn-ticket-primary" onclick="openChat(${t.id})">Gestión</button>
+                        <button class="btn-ticket-danger" onclick="showTicketAction(${t.id})">Cerrar</button>
+                    </div>
+                </div>
+            `).join('');
+            updateDashboardStats();
+        }
+
+        function updateDashboardStats() {
+            const alertsValue = document.getElementById('stat-alerts');
+            const ticketsValue = document.getElementById('stat-tickets');
+            const endpointsValue = document.getElementById('stat-endpoints');
+
+            if (alertsValue) alertsValue.innerText = tickets.filter(t => t.priority === 'high').length;
+            if (ticketsValue) ticketsValue.innerText = tickets.length;
+            if (endpointsValue) endpointsValue.innerText = devices.length;
+        }
+
+        function openChat(id) {
+            activeTicketId = id;
+            const ticket = tickets.find(t => t.id === id);
+            document.getElementById('chat-title').innerText = `Gestión Ticket #${id}`;
+
+            // Set detailed context
+            document.getElementById('chat-user-info').innerText = `Reporter: ${ticket.user}`;
+            document.getElementById('chat-time-info').innerText = `Abierto a las: ${ticket.createdAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+
+            const deviceContainer = document.getElementById('chat-device-container');
+            if (ticket.device) {
+                deviceContainer.innerHTML = `
+                    <div class="device-tag active">
+                        <i>📟</i> ${ticket.device}
+                    </div>
+                `;
+            } else {
+                deviceContainer.innerHTML = `
+                    <div class="device-tag">
+                        <i>🛡️</i> Sin equipo asociado
+                    </div>
+                `;
+            }
+
+            document.getElementById('chat-modal').style.display = 'flex';
+            renderChatHistory();
+        }
+
+        function closeChat() {
+            document.getElementById('chat-modal').style.display = 'none';
+            activeTicketId = null;
+        }
+
+        function renderChatHistory() {
+            const ticket = tickets.find(t => t.id === activeTicketId);
+            const history = document.getElementById('chat-history');
+            history.innerHTML = ticket.history.map(m => `
+                <div class="chat-bubble ${m.role}">
+                    ${m.text}
+                </div>
+            `).join('');
+            history.scrollTop = history.scrollHeight;
+        }
+
+        function sendChatMessage() {
+            const input = document.getElementById('chat-input');
+            const text = input.value.trim();
+            if (!text) return;
+
+            const ticket = tickets.find(t => t.id === activeTicketId);
+            ticket.history.push({ role: 'admin', text: text });
+            input.value = '';
+            renderChatHistory();
+
+            // Auto-reply simulation
+            setTimeout(() => {
+                ticket.history.push({ role: 'user', text: 'Entendido, quedo a la espera de más instrucciones.' });
+                renderChatHistory();
+            }, 1500);
+        }
+
+        function showTicketAction(id) {
+            activeTicketId = id;
+            const ticket = tickets.find(t => t.id === id);
+            document.getElementById('resolve-subtitle').innerText = `Ticket #${id}: ${ticket.title}`;
+            document.getElementById('resolve-notes').value = '';
+
+            // Set opening time and user
+            document.getElementById('resolve-open-time').innerText = ticket.createdAt.toLocaleTimeString();
+            document.getElementById('resolve-user-opened').innerText = ticket.user;
+
+            // Set current closing time
+            const now = new Date();
+            document.getElementById('resolve-close-time').innerText = now.toLocaleTimeString();
+
+            document.getElementById('resolve-modal').style.display = 'flex';
+
+            // Calculate time spent
+            const diff = Math.abs(now - ticket.createdAt);
+            const hours = Math.floor(diff / 3600000);
+            const mins = Math.floor((diff % 3600000) / 60000);
+            const secs = Math.floor((diff % 60000) / 1000);
+            document.getElementById('resolve-time').innerText =
+                `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+        }
+
+        function closeResolve() {
+            document.getElementById('resolve-modal').style.display = 'none';
+            activeTicketId = null;
+        }
+
+        function confirmResolution() {
+            const notes = document.getElementById('resolve-notes').value.trim();
+            const time = document.getElementById('resolve-time').innerText;
+            const openTime = document.getElementById('resolve-open-time').innerText;
+            const closeTime = document.getElementById('resolve-close-time').innerText;
+
+            if (!notes) {
+                alert('Por favor, indica qué tareas se han realizado.');
+                return;
+            }
+
+            closeTicket(activeTicketId, notes, time, openTime, closeTime);
+            closeResolve();
+        }
+
+        function closeTicket(id, notes = '', time = '', openTime = '', closeTime = '') {
+            const index = tickets.findIndex(t => t.id === id);
+            if (index !== -1) {
+                const ticket = tickets[index];
+                tickets.splice(index, 1);
+                renderTickets();
+
+                // Add to main terminal
+                const term = document.getElementById('main-terminal');
+                const line = document.createElement('div');
+                line.className = 'terminal-line';
+                line.style.color = 'var(--demo-success)';
+                line.innerText = `> [TICKET] #${id} RESUELTO por Admin demo.`;
+                term.appendChild(line);
+
+                const detailLine = document.createElement('div');
+                detailLine.className = 'terminal-line';
+                detailLine.style.fontSize = '0.8rem';
+                detailLine.innerText = `> Apertura: ${openTime} | Cierre: ${closeTime} | Duración: ${time}`;
+                term.appendChild(detailLine);
+
+                const userDetail = document.createElement('div');
+                userDetail.className = 'terminal-line';
+                userDetail.style.fontSize = '0.8rem';
+                userDetail.innerText = `> Solicitado por: ${ticket.user} | Gestionado por: Admin demo`;
+                term.appendChild(userDetail);
+
+                if (notes) {
+                    const noteLine = document.createElement('div');
+                    noteLine.className = 'terminal-line';
+                    noteLine.style.fontSize = '0.8rem';
+                    noteLine.style.opacity = '0.7';
+                    noteLine.innerText = `> Tareas: ${notes}`;
+                    term.appendChild(noteLine);
+                }
+
+                term.scrollTop = term.scrollHeight;
+            }
+        }
+
+        // Fluctuating resources
+        function startResourceFluctuation() {
+            setInterval(() => {
+                devices.forEach(d => {
+                    if (d.status === 'online') {
+                        // Correlation: Higher CPU usually means higher RAM usage
+                        // We'll use a shared "load" factor
+                        const loadChange = (Math.random() * 10 - 5); // -5 to +5%
+
+                        // Update CPU
+                        d.cpu = Math.max(5, Math.min(98, d.cpu + loadChange));
+
+                        // Update RAM based on CPU load + small variation
+                        const currentRamStr = d.ram.split('/')[0];
+                        const maxRam = parseFloat(d.ram.split('/')[1]);
+                        let currentRamNum = parseFloat(currentRamStr);
+
+                        // RAM follows CPU but slower/damped
+                        const ramTarget = (d.cpu / 100) * maxRam * 0.8 + (maxRam * 0.1);
+                        const ramChange = (ramTarget - currentRamNum) * 0.1 + (Math.random() * 0.2 - 0.1);
+
+                        currentRamNum = Math.max(maxRam * 0.1, Math.min(maxRam * 0.95, currentRamNum + ramChange));
+                        d.ram = `${currentRamNum.toFixed(1)}/${maxRam}`;
+                    }
+                });
+
+                // If device detail is open, update it
+                const detailBox = document.getElementById('device-details-box');
+                if (detailBox.style.display === 'block') {
+                    const activeName = document.getElementById('detail-name').innerText;
+                    const index = devices.findIndex(d => d.name === activeName);
+                    if (index !== -1) showDeviceDetail(index);
+                }
+            }, 2000);
+        }
+
+        window.onload = () => {
+            populateDevices();
+            populateDeviceSelector();
+            renderTickets();
+            startMainTerminal();
+            startResourceFluctuation();
+
+            // Add Enter key support for chat
+            document.getElementById('chat-input')?.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') sendChatMessage();
+            });
+        };
+    </script>
+</body>
+
+</html>

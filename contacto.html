@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contacto | NexaCoreSystems & IT</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="index.css">
+</head>
+
+<body class="subpage">
+    <header>
+        <nav class="container">
+            <a href="index.html" class="logo" style="text-decoration: none; color: inherit;">
+                <div class="logo-icon">N</div>
+                <div class="logo-text">NEXACORE<span>SYSTEMS & IT</span></div>
+            </a>
+            <ul class="nav-links">
+                <li><a href="index.html#servicios">Servicios</a></li>
+                <li><a href="index.html#testimonials">Opiniones</a></li>
+                <li><a href="index.html#faq">FAQ</a></li>
+            </ul>
+            <a href="index.html" class="btn btn-outline">Volver al Inicio</a>
+        </nav>
+    </header>
+
+    <main>
+        <section class="contact-section">
+            <div class="container">
+                <div class="section-title">
+                    <span class="badge">Atención Personalizada</span>
+                    <h1>Hablemos de tu <span>Próximo Paso</span></h1>
+                    <p>Completa el formulario y un especialista en IT se pondrá en contacto contigo en menos de 24
+                        horas.</p>
+                </div>
+                <div class="contact-card">
+                    <div class="contact-info">
+                        <span class="badge">NexaCore Global</span>
+                        <h2>¿Por qué NexaCore?</h2>
+                        <ul class="feature-list" style="list-style: none; padding: 0; margin-top: 1.5rem;">
+                            <li style="margin-bottom: 1.2rem; display: flex; align-items: center; gap: 0.8rem;">
+                                <span style="color: var(--secondary); font-size: 1.2rem;">✓</span>
+                                <span>Auditoría inicial de infraestructura sin coste</span>
+                            </li>
+                            <li style="margin-bottom: 1.2rem; display: flex; align-items: center; gap: 0.8rem;">
+                                <span style="color: var(--secondary); font-size: 1.2rem;">✓</span>
+                                <span>Especialistas certificados en Cloud y Seguridad</span>
+                            </li>
+                            <li style="margin-bottom: 1.2rem; display: flex; align-items: center; gap: 0.8rem;">
+                                <span style="color: var(--secondary); font-size: 1.2rem;">✓</span>
+                                <span>Acuerdos de Nivel de Servicio (SLA) del 99.9%</span>
+                            </li>
+                        </ul>
+                        <div class="contact-items"
+                            style="margin-top: 2.5rem; padding-top: 2rem; border-top: 1px solid var(--glass-border);">
+                            <div class="item">
+                                <span style="font-size: 1.5rem;">📍</span>
+                                <div>
+                                    <strong style="display: block; color: var(--text-white);">Oficinas
+                                        Centrales</strong>
+                                    <span style="font-size: 0.9rem;">Calle Tecnológica 101, Madrid</span>
+                                </div>
+                            </div>
+                            <div class="item">
+                                <span style="font-size: 1.5rem;">📞</span>
+                                <div>
+                                    <strong style="display: block; color: var(--text-white);">Ventas y Soporte</strong>
+                                    <span>+34 912 345 678</span>
+                                </div>
+                            </div>
+                            <div class="item">
+                                <span style="font-size: 1.5rem;">✉️</span>
+                                <div>
+                                    <strong style="display: block; color: var(--text-white);">Email Corporativo</strong>
+                                    <span>info@nexacoresystems.com</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <form id="contact-form" class="contact-form">
+                        <div class="form-group">
+                            <label>Nombre Completo</label>
+                            <input type="text" placeholder="Tu nombre" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Email Corporativo</label>
+                            <input type="email" placeholder="ejemplo@empresa.com" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Asunto</label>
+                            <select required>
+                                <option>Consultoría de Sistemas</option>
+                                <option>Seguridad Gestionada</option>
+                                <option>Migración Cloud</option>
+                                <option value="Comprar">Comprar Paquete</option>
+                                <option>Otro</option>
+                            </select>
+                        </div>
+                        <div class="form-group" id="package-detail" style="display: none;">
+                            <label>Paquete Seleccionado</label>
+                            <input type="text" id="selected-package" readonly
+                                style="background: rgba(255,255,255,0.05); cursor: default;">
+                        </div>
+                        <div class="form-group">
+                            <label>Mensaje</label>
+                            <textarea placeholder="¿En qué podemos ayudarte?"></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100" style="margin-top: 1rem;">Enviar
+                            Solicitud</button>
+                    </form>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="container">
+            <div class="footer-bottom" style="border: none;">
+                <p>&copy; 2026 NexaCoreSystems & IT. Todos los derechos reservados.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const params = new URLSearchParams(window.location.search);
+            const asunto = params.get('asunto');
+            const packageName = params.get('package');
+
+            if (asunto === 'Comprar') {
+                const asuntoSelect = document.querySelector('select');
+                asuntoSelect.value = 'Comprar';
+
+                if (packageName) {
+                    const packageDetail = document.getElementById('package-detail');
+                    const packageInput = document.getElementById('selected-package');
+                    packageDetail.style.display = 'block';
+                    packageInput.value = packageName;
+
+                    const messageArea = document.querySelector('textarea');
+                    messageArea.placeholder = `Hola, me interesa el ${packageName}. Me gustaría recibir más información para proceder con la compra.`;
+                }
+            }
+        });
+
+        document.getElementById('contact-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const formData = {
+                nombre: document.getElementById('nombre').value,
+                email: document.getElementById('email').value,
+                asunto: document.getElementById('asunto').value,
+                package: document.getElementById('selected-package').value || 'Ninguno',
+                mensaje: document.querySelector('textarea').value,
+                date: new Date().toLocaleString('es-ES'),
+                ip: 'Desconocida'
+            };
+
+            try {
+                const response = await fetch('https://api.ipify.org?format=json');
+                const data = await response.json();
+                formData.ip = data.ip;
+            } catch (error) {
+                console.error('Error fetching IP:', error);
+            }
+
+            // Save to localStorage
+            const leads = JSON.parse(localStorage.getItem('nexa_leads')) || [];
+            leads.unshift(formData);
+            localStorage.setItem('nexa_leads', JSON.stringify(leads));
+
+            alert('¡Gracias! Tu solicitud ha sido enviada con éxito.');
+            window.location.href = 'index.html';
+        });
+    </script>
+    <script src="main.js"></script>
+</body>
+
+</html>
