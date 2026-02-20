@@ -494,12 +494,27 @@
         const activeModes = {};
 
         async function init() {
+            const cloudBadge = document.getElementById('cloud-status');
             let saved;
             try {
                 const snap = await getDoc(doc(db, 'config', 'media'));
-                if (snap.exists()) saved = snap.data();
+                if (snap.exists()) {
+                    saved = snap.data();
+                    if (cloudBadge) {
+                        cloudBadge.innerHTML = '<span style="width: 8px; height: 8px; background: #00ffaa; border-radius: 50%; box-shadow: 0 0 10px #00ffaa;"></span> Cloud Active';
+                        cloudBadge.style.borderColor = 'rgba(0,255,170,0.2)';
+                    }
+                } else {
+                    if (cloudBadge) {
+                        cloudBadge.innerHTML = '<span style="width: 8px; height: 8px; background: #00ffaa; border-radius: 50%; box-shadow: 0 0 10px #00ffaa;"></span> Cloud Ready (Empty)';
+                    }
+                }
             } catch (error) {
                 console.warn("NexaCore: Error loading from Firestore, trying local fallback", error);
+                if (cloudBadge) {
+                    cloudBadge.innerHTML = '<span style="width: 8px; height: 8px; background: #ff4d4d; border-radius: 50%; box-shadow: 0 0 10px #ff4d4d;"></span> Cloud Offline';
+                    cloudBadge.style.borderColor = 'rgba(255,77,77,0.2)';
+                }
             }
 
             if (!saved) {

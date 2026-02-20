@@ -214,6 +214,24 @@
         const isAdmin = sessionStorage.getItem('nexa_admin') === 'true';
 
         async function init() {
+            const cloudBadge = document.getElementById('cloud-status');
+
+            try {
+                // Test connectivity with a small fetch
+                await getDoc(doc(db, 'analytics', 'stats'));
+                if (cloudBadge) {
+                    cloudBadge.innerHTML = '<span style="width: 8px; height: 8px; background: #00ffaa; border-radius: 50%; box-shadow: 0 0 10px #00ffaa;"></span> Cloud Active';
+                    cloudBadge.style.borderColor = 'rgba(0,255,170,0.2)';
+                }
+            } catch (err) {
+                console.error("Firebase Connection Error:", err);
+                if (cloudBadge) {
+                    cloudBadge.innerHTML = '<span style="width: 8px; height: 8px; background: #ff4d4d; border-radius: 50%; box-shadow: 0 0 10px #ff4d4d;"></span> Cloud Offline / No Rules';
+                    cloudBadge.style.borderColor = 'rgba(255,77,77,0.2)';
+                    cloudBadge.style.background = 'rgba(255,77,77,0.05)';
+                }
+            }
+
             if (isAdmin) {
                 accessLabel.innerHTML = '<span style="color:var(--secondary); font-weight:700;">● MODO ADMINISTRADOR</span> (Acceso Completo)';
                 if (resetBtn) resetBtn.style.display = 'block';
@@ -289,7 +307,7 @@
             if (!dateInput.value) return alert('Selecciona una fecha');
 
             const [y, m, d] = dateInput.value.split('-');
-            const dateKey = `${parseInt(d)}-${parseInt(m)}-${y}`;
+            const dateKey = `${d}-${m}-${y}`;
 
             const count = parseInt(countInput.value) || 0;
             const uniqueInc = Math.floor(count * (0.3 + Math.random() * 0.4));

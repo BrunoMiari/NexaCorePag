@@ -181,14 +181,23 @@
         });
 
         function initRealtimeLeads() {
+            const cloudBadge = document.getElementById('cloud-status');
             const leadsRef = collection(db, 'leads');
             const leadsQuery = query(leadsRef, orderBy('timestamp', 'desc'));
 
             onSnapshot(leadsQuery, (snapshot) => {
+                if (cloudBadge) {
+                    cloudBadge.innerHTML = '<span style="width: 8px; height: 8px; background: #00ffaa; border-radius: 50%; box-shadow: 0 0 10px #00ffaa;"></span> Cloud Active';
+                    cloudBadge.style.borderColor = 'rgba(0,255,170,0.2)';
+                }
                 leads = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 renderLeads();
             }, (error) => {
                 console.error("Error with leads snapshot:", error);
+                if (cloudBadge) {
+                    cloudBadge.innerHTML = '<span style="width: 8px; height: 8px; background: #ff4d4d; border-radius: 50%; box-shadow: 0 0 10px #ff4d4d;"></span> Cloud Offline';
+                    cloudBadge.style.borderColor = 'rgba(255,77,77,0.2)';
+                }
                 // Fallback to local
                 leads = JSON.parse(localStorage.getItem('nexa_leads')) || [];
                 renderLeads();
