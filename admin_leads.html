@@ -121,7 +121,13 @@
     <div class="admin-container" id="admin-content" style="display: none;">
         <div class="header">
             <h1>Gestor de Clientes (Leads)</h1>
-            <div style="gap: 15px; display: flex;">
+            <div style="gap: 15px; display: flex; align-items: center;">
+                <div id="cloud-status"
+                    style="font-size: 0.7rem; color: var(--text-gray); display: flex; align-items: center; gap: 5px; background: rgba(0,255,170,0.05); padding: 5px 10px; border-radius: 50px; border: 1px solid rgba(0,255,170,0.2);">
+                    <span
+                        style="width: 8px; height: 8px; background: #00ffaa; border-radius: 50%; box-shadow: 0 0 10px #00ffaa;"></span>
+                    Cloud Active
+                </div>
                 <button class="btn btn-outline" onclick="window.location.href='admin_stats.html'">Ver
                     Analíticas</button>
                 <button class="btn btn-outline" onclick="exportJSON()">Exportar JSON</button>

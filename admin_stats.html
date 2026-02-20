@@ -117,7 +117,13 @@
                 <h1>Analíticas de NexaCore</h1>
                 <p id="access-level" style="color: var(--text-gray); font-size: 0.9rem;">Cargando nivel de acceso...</p>
             </div>
-            <div style="display: flex; gap: 15px;">
+            <div style="display: flex; gap: 15px; align-items: center;">
+                <div id="cloud-status"
+                    style="font-size: 0.7rem; color: var(--text-gray); display: flex; align-items: center; gap: 5px; background: rgba(0,255,170,0.05); padding: 5px 10px; border-radius: 50px; border: 1px solid rgba(0,255,170,0.2);">
+                    <span
+                        style="width: 8px; height: 8px; background: #00ffaa; border-radius: 50%; box-shadow: 0 0 10px #00ffaa;"></span>
+                    Cloud Connected
+                </div>
                 <button class="btn btn-dark btn-small" id="leads-btn" style="display:none;"
                     onclick="window.location.href='admin_leads.html'">Ir a Leads</button>
                 <button class="btn btn-dark btn-small" onclick="window.location.href='index.html'">Volver Web</button>

@@ -456,17 +456,20 @@
     </div>
 
     <div class="save-bar">
+        <div id="cloud-status"
+            style="font-size: 0.7rem; color: #b0bac1; display: flex; align-items: center; gap: 5px; background: rgba(0,255,170,0.05); padding: 5px 12px; border-radius: 50px; border: 1px solid rgba(0,255,170,0.2); margin-right: 15px;">
+            <span
+                style="width: 8px; height: 8px; background: #00ffaa; border-radius: 50%; box-shadow: 0 0 10px #00ffaa;"></span>
+            Cloud Active
+        </div>
         <button class="btn btn-outline btn-small"
             style="font-size: 0.7rem; border-color: rgba(255,255,255,0.2); color: rgba(255,255,255,0.6);"
-            onclick="resetAll()">Limpiar Todo</button>
-        <div style="flex: 1; margin: 0 20px;">
-            <div style="height: 6px; background: rgba(255,255,255,0.1); border-radius: 3px; overflow: hidden;">
-                <div id="storage-usage"
-                    style="width: 0%; height: 100%; background: var(--secondary); transition: width 0.3s;"></div>
-            </div>
-        </div>
-        <span id="storage-text" style="font-size: 0.7rem; color: var(--text-gray); margin-right: auto;">Uso: 0%</span>
-        <button class="btn btn-primary" id="save-btn" onclick="saveAll()">Guardar Cambios</button>
+            onclick="updateStorageIndicator()">Refrescar Tamaño</button>
+        <button class="btn btn-primary" id="save-btn" onclick="saveAll()">Sincronizar Nube</button>
+        <button onclick="window.location.href='index.html'" class="btn btn-outline btn-small"
+            style="background: rgba(255,255,255,0.05); border: none; color: var(--text-gray);" title="Volver a la web">
+            Salir
+        </button>
     </div>
     <script type="module">
         import { db, storage, doc, getDoc, setDoc, ref, uploadBytes, getDownloadURL } from './firebase-config.js';

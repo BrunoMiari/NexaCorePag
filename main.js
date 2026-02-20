@@ -336,18 +336,39 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (contactForm) {
         contactForm.addEventListener('submit', async (e) => {
             e.preventDefault();
+
+            const btn = contactForm.querySelector('button[type="submit"]');
+            const originalText = btn.innerText;
+            btn.innerText = 'Enviando...';
+            btn.disabled = true;
+
             const lead = {
-                name: document.getElementById('name')?.value || 'N/A',
-                email: document.getElementById('email')?.value || 'N/A',
-                message: document.getElementById('message')?.value || 'N/A',
+                name: document.getElementById('name')?.value || document.querySelector('input[placeholder*="nombre"]')?.value || 'N/A',
+                email: document.getElementById('email')?.value || document.querySelector('input[type="email"]')?.value || 'N/A',
+                subject: document.getElementById('subject')?.value || contactForm.querySelector('select')?.value || 'General',
+                package: document.getElementById('selected-package')?.value || 'Ninguno',
+                message: document.getElementById('message')?.value || contactForm.querySelector('textarea')?.value || 'N/A',
                 date: new Date().toLocaleString('es-ES'),
-                timestamp: Date.now()
+                timestamp: Date.now(),
+                ip: 'Desconocida'
             };
+
+            // Attempt to fetch IP
+            try {
+                const response = await fetch('https://api.ipify.org?format=json');
+                const data = await response.json();
+                lead.ip = data.ip;
+            } catch (ipErr) {
+                console.warn("Could not fetch IP", ipErr);
+            }
 
             try {
                 await addDoc(collection(db, 'leads'), lead);
                 alert('¡Solicitud enviada! Un experto de NexaCore se pondrá en contacto contigo pronto.');
                 contactForm.reset();
+                if (window.location.pathname.includes('contacto.html')) {
+                    window.location.href = 'index.html';
+                }
             } catch (error) {
                 console.warn("Error sending lead to Firebase", error);
                 // Local fallback
@@ -356,6 +377,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                 localStorage.setItem('nexa_leads', JSON.stringify(leads));
                 alert('¡Solicitud enviada! (Guardada localmente)');
                 contactForm.reset();
+            } finally {
+                btn.innerText = originalText;
+                btn.disabled = false;
             }
         });
     }

@@ -729,18 +729,37 @@
         </div>
     </div>
 
-    <script>
-        // Track visit to demo
-        (function () {
-            let stats = JSON.parse(localStorage.getItem('nexa_stats')) || { totalVisits: 0, uniqueVisitors: 0, dailyVisits: {} };
-            const today = new Date().toLocaleDateString();
-            stats.totalVisits++;
-            if (!sessionStorage.getItem('nexa_visited')) {
-                stats.uniqueVisitors++;
-                sessionStorage.setItem('nexa_visited', 'true');
+    <script type="module">
+        import { db, doc, setDoc, increment } from './firebase-config.js';
+
+        // Track visit to demo using cloud analytics
+        (async function () {
+            const statsRef = doc(db, 'analytics', 'stats');
+            const today = new Date().toLocaleDateString('es-ES').replace(/\//g, '-');
+
+            try {
+                await setDoc(statsRef, {
+                    totalVisits: increment(1),
+                    [`dailyVisits.${today}`]: increment(1)
+                }, { merge: true });
+
+                if (!sessionStorage.getItem('nexa_visited')) {
+                    await setDoc(statsRef, {
+                        uniqueVisitors: increment(1)
+                    }, { merge: true });
+                    sessionStorage.setItem('nexa_visited', 'true');
+                }
+            } catch (err) {
+                console.warn("Demo Analytics: Cloud tracking failed, using local fallback", err);
+                let stats = JSON.parse(localStorage.getItem('nexa_stats')) || { totalVisits: 0, uniqueVisitors: 0, dailyVisits: {} };
+                stats.totalVisits++;
+                if (!sessionStorage.getItem('nexa_visited')) {
+                    stats.uniqueVisitors++;
+                    sessionStorage.setItem('nexa_visited', 'true');
+                }
+                stats.dailyVisits[today] = (stats.dailyVisits[today] || 0) + 1;
+                localStorage.setItem('nexa_stats', JSON.stringify(stats));
             }
-            stats.dailyVisits[today] = (stats.dailyVisits[today] || 0) + 1;
-            localStorage.setItem('nexa_stats', JSON.stringify(stats));
         })();
 
         const devices = [

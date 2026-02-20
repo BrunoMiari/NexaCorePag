@@ -1,11 +1,11 @@
-// Configuración de Firebase - REEMPLAZA LOS VALORES CON LOS DE TU CONSOLA DE FIREBASE
 const firebaseConfig = {
-    apiKey: "TU_API_KEY",
-    authDomain: "tu-proyecto.firebaseapp.com",
-    projectId: "tu-proyecto",
-    storageBucket: "tu-proyecto.appspot.com",
-    messagingSenderId: "TU_SENDER_ID",
-    appId: "TU_APP_ID"
+    apiKey: "AIzaSyDWPVO1Fl9kU0BSwnGfb_rJVnoxPhQLdLI",
+    authDomain: "nexacore-733c9.firebaseapp.com",
+    projectId: "nexacore-733c9",
+    storageBucket: "nexacore-733c9.firebasestorage.app",
+    messagingSenderId: "695132076215",
+    appId: "1:695132076215:web:ccc891cfa18e3a859d3532",
+    measurementId: "G-31E16WZNVM"
 };
 
 // Importar los módulos necesarios de Firebase desde el CDN

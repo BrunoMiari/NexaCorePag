@@ -83,15 +83,15 @@
                     <form id="contact-form" class="contact-form">
                         <div class="form-group">
                             <label>Nombre Completo</label>
-                            <input type="text" placeholder="Tu nombre" required>
+                            <input type="text" id="name" placeholder="Tu nombre" required>
                         </div>
                         <div class="form-group">
                             <label>Email Corporativo</label>
-                            <input type="email" placeholder="ejemplo@empresa.com" required>
+                            <input type="email" id="email" placeholder="ejemplo@empresa.com" required>
                         </div>
                         <div class="form-group">
                             <label>Asunto</label>
-                            <select required>
+                            <select id="subject" required>
                                 <option>Consultoría de Sistemas</option>
                                 <option>Seguridad Gestionada</option>
                                 <option>Migración Cloud</option>
@@ -106,7 +106,7 @@
                         </div>
                         <div class="form-group">
                             <label>Mensaje</label>
-                            <textarea placeholder="¿En qué podemos ayudarte?"></textarea>
+                            <textarea id="message" placeholder="¿En qué podemos ayudarte?"></textarea>
                         </div>
                         <button type="submit" class="btn btn-primary w-100" style="margin-top: 1rem;">Enviar
                             Solicitud</button>
@@ -131,49 +131,23 @@
             const packageName = params.get('package');
 
             if (asunto === 'Comprar') {
-                const asuntoSelect = document.querySelector('select');
-                asuntoSelect.value = 'Comprar';
+                const asuntoSelect = document.getElementById('subject');
+                if (asuntoSelect) {
+                    asuntoSelect.value = 'Comprar';
 
-                if (packageName) {
-                    const packageDetail = document.getElementById('package-detail');
-                    const packageInput = document.getElementById('selected-package');
-                    packageDetail.style.display = 'block';
-                    packageInput.value = packageName;
+                    if (packageName) {
+                        const packageDetail = document.getElementById('package-detail');
+                        const packageInput = document.getElementById('selected-package');
+                        packageDetail.style.display = 'block';
+                        packageInput.value = packageName;
 
-                    const messageArea = document.querySelector('textarea');
-                    messageArea.placeholder = `Hola, me interesa el ${packageName}. Me gustaría recibir más información para proceder con la compra.`;
+                        const messageArea = document.getElementById('message');
+                        if (messageArea) {
+                            messageArea.placeholder = `Hola, me interesa el ${packageName}. Me gustaría recibir más información para proceder con la compra.`;
+                        }
+                    }
                 }
             }
-        });
-
-        document.getElementById('contact-form').addEventListener('submit', async (e) => {
-            e.preventDefault();
-
-            const formData = {
-                nombre: document.getElementById('nombre').value,
-                email: document.getElementById('email').value,
-                asunto: document.getElementById('asunto').value,
-                package: document.getElementById('selected-package').value || 'Ninguno',
-                mensaje: document.querySelector('textarea').value,
-                date: new Date().toLocaleString('es-ES'),
-                ip: 'Desconocida'
-            };
-
-            try {
-                const response = await fetch('https://api.ipify.org?format=json');
-                const data = await response.json();
-                formData.ip = data.ip;
-            } catch (error) {
-                console.error('Error fetching IP:', error);
-            }
-
-            // Save to localStorage
-            const leads = JSON.parse(localStorage.getItem('nexa_leads')) || [];
-            leads.unshift(formData);
-            localStorage.setItem('nexa_leads', JSON.stringify(leads));
-
-            alert('¡Gracias! Tu solicitud ha sido enviada con éxito.');
-            window.location.href = 'index.html';
         });
     </script>
     <script type="module" src="main.js"></script>
