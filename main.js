@@ -21,9 +21,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             // Track unique visitor based on a session flag
             if (!sessionStorage.getItem('nexa_visited')) {
-                await updateDoc(statsRef, {
+                await setDoc(statsRef, {
                     uniqueVisitors: increment(1)
-                });
+                }, { merge: true });
                 sessionStorage.setItem('nexa_visited', 'true');
             }
         } catch (error) {

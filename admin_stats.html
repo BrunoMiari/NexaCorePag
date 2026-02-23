@@ -347,10 +347,10 @@
 
             try {
                 const statsRef = doc(db, 'analytics', 'stats');
-                await updateDoc(statsRef, {
+                await setDoc(statsRef, {
                     totalVisits: total,
                     uniqueVisitors: unique
-                });
+                }, { merge: true });
                 alert('Totales globales actualizados en la nube.');
                 await renderStats(true);
             } catch (error) {
