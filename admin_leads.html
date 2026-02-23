@@ -128,9 +128,10 @@
                         style="width: 8px; height: 8px; background: #00ffaa; border-radius: 50%; box-shadow: 0 0 10px #00ffaa;"></span>
                     Cloud Active
                 </div>
-                <button class="btn btn-outline" onclick="window.location.href='admin_stats.html'">Ver
+                <button id="view-stats-btn" class="btn btn-outline"
+                    onclick="window.location.href='admin_stats.html'">Ver
                     Analíticas</button>
-                <button class="btn btn-outline" onclick="exportJSON()">Exportar JSON</button>
+                <button id="export-btn" class="btn btn-outline">Exportar JSON</button>
                 <button class="btn btn-outline" onclick="window.location.href='index.html'">Volver a la Web</button>
             </div>
         </div>
@@ -219,20 +220,21 @@
                     </td>
                     <td style="max-width: 300px; white-space: pre-wrap; font-size: 0.85rem; color: #d0d0d0;">${lead.message || lead.mensaje}</td>
                     <td><span class="ip-badge">${lead.ip || 'Cloud'}</span></td>
-                    <td><button class="btn-delete" onclick="deleteLead(${index})">Borrar</button></td>
+                    <td><button class="btn-delete" data-index="${index}">Borrar</button></td>
                 </tr>
             `).join('');
         }
 
-        window.deleteLead = async (index) => {
-            if (confirm('¿Seguro que quieres borrar este registro en la nube?')) {
+        async function deleteLead(index) {
+            if (confirm('¿Seguro que quieres borrar este registro de la nube?')) {
                 const leadToDelete = leads[index];
-                if (leadToDelete.id) {
+                if (leadToDelete && leadToDelete.id) {
                     try {
                         await deleteDoc(doc(db, 'leads', leadToDelete.id));
+                        alert("Registro borrado correctamente.");
                     } catch (error) {
                         console.error("Error deleting lead:", error);
-                        alert("Error al borrar en Firebase.");
+                        alert("Error al borrar: " + error.message);
                     }
                 } else {
                     leads.splice(index, 1);
@@ -240,16 +242,30 @@
                     renderLeads();
                 }
             }
-        };
+        }
 
-        window.exportJSON = () => {
-            const blob = new Blob([JSON.stringify(leads, null, 2)], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `nexa_leads_${new Date().toLocaleDateString()}.json`;
-            a.click();
-        };
+        function exportJSON() {
+            try {
+                const blob = new Blob([JSON.stringify(leads, null, 2)], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `nexa_leads_${new Date().toLocaleDateString()}.json`;
+                a.click();
+            } catch (err) {
+                alert("Error al exportar: " + err.message);
+            }
+        }
+
+        // Event Delegation for delete buttons
+        document.getElementById('leads-body').addEventListener('click', (e) => {
+            if (e.target.classList.contains('btn-delete')) {
+                const index = parseInt(e.target.dataset.index);
+                deleteLead(index);
+            }
+        });
+
+        document.getElementById('export-btn')?.addEventListener('click', exportJSON);
 
         // If already logged in this session
         if (sessionStorage.getItem('nexa_admin') === 'true') {

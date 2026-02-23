@@ -128,7 +128,7 @@
                     onclick="window.location.href='admin_leads.html'">Ir a Leads</button>
                 <button class="btn btn-dark btn-small" onclick="window.location.href='index.html'">Volver Web</button>
                 <button id="reset-btn" class="btn btn-primary btn-small"
-                    style="background:#ff4d4d; border:none; display:none;" onclick="resetStats()">Resetear
+                    style="background:#ff4d4d; border:none; display:none;">Resetear
                     Datos</button>
             </div>
         </div>
@@ -179,7 +179,7 @@
                         <input type="date" id="gen-date" style="flex: 2;">
                         <input type="number" id="gen-count" placeholder="Cant." style="flex: 1;" value="10">
                     </div>
-                    <button class="btn btn-secondary btn-small w-100" onclick="injectVisits()">Inyectar Visitas</button>
+                    <button id="inject-btn" class="btn btn-secondary btn-small w-100">Inyectar Visitas</button>
                 </div>
                 <!-- Manual Overrides -->
                 <div>
@@ -195,7 +195,7 @@
                             <input type="number" id="override-unique">
                         </div>
                     </div>
-                    <button class="btn btn-outline btn-small w-100" onclick="updateTotals()">Actualizar Totales</button>
+                    <button id="override-btn" class="btn btn-outline btn-small w-100">Actualizar Totales</button>
                 </div>
             </div>
         </div>
@@ -300,7 +300,7 @@
             }).join('') || '<tr><td colspan="3" style="text-align:center; color: var(--text-gray);">No hay datos todavía.</td></tr>';
         }
 
-        window.injectVisits = async () => {
+        async function injectVisits() {
             const dateInput = document.getElementById('gen-date');
             const countInput = document.getElementById('gen-count');
 
@@ -320,17 +320,19 @@
                     [`dailyVisits.${dateKey}`]: increment(count)
                 }, { merge: true });
 
-                alert(`Inyectadas ${count} visitas para el día ${dateKey}`);
+                alert(`¡Éxito! Inyectadas ${count} visitas para el día ${dateKey}`);
                 await renderStats(true);
             } catch (error) {
                 console.error("Error injecting visits:", error);
-                alert("Error al inyectar datos en Firebase.");
+                alert("Error al inyectar datos: " + error.message);
             }
-        };
+        }
 
-        window.updateTotals = async () => {
+        async function updateTotals() {
             const total = parseInt(document.getElementById('override-total').value);
             const unique = parseInt(document.getElementById('override-unique').value);
+
+            if (isNaN(total) || isNaN(unique)) return alert('Introduce valores válidos');
 
             try {
                 const statsRef = doc(db, 'analytics', 'stats');
@@ -338,16 +340,16 @@
                     totalVisits: total,
                     uniqueVisitors: unique
                 });
-                alert('Totales globales actualizados en Firebase.');
+                alert('Totales globales actualizados en la nube.');
                 await renderStats(true);
             } catch (error) {
                 console.error("Error updating totals:", error);
-                alert("Error al actualizar totales.");
+                alert("Error al actualizar totales: " + error.message);
             }
-        };
+        }
 
-        window.resetStats = async () => {
-            if (confirm('¿Estás SEGURO de que quieres borrar TODOS los datos de analítica en Firebase?')) {
+        async function resetStats() {
+            if (confirm('¿Estás SEGURO de que quieres borrar TODOS los datos de analítica de la nube?')) {
                 try {
                     await setDoc(doc(db, 'analytics', 'stats'), {
                         totalVisits: 0,
@@ -358,9 +360,15 @@
                     alert('Estadísticas reseteadas correctamente.');
                 } catch (error) {
                     console.error("Error resetting stats:", error);
+                    alert("Error al resetear: " + error.message);
                 }
             }
-        };
+        }
+
+        // Bind events
+        document.getElementById('inject-btn')?.addEventListener('click', injectVisits);
+        document.getElementById('override-btn')?.addEventListener('click', updateTotals);
+        document.getElementById('reset-btn')?.addEventListener('click', resetStats);
 
         init();
     </script>
