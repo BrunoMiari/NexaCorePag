@@ -20,20 +20,20 @@ document.addEventListener('DOMContentLoaded', async () => {
             }, { merge: true });
 
             // Track unique visitor based on a session flag
-            if (!sessionStorage.getItem('nexa_visited')) {
+            if (!localStorage.getItem('nexa_visited')) {
                 await setDoc(statsRef, {
                     uniqueVisitors: increment(1)
                 }, { merge: true });
-                sessionStorage.setItem('nexa_visited', 'true');
+                localStorage.setItem('nexa_visited', 'true');
             }
         } catch (error) {
             console.warn("NexaCore: Error tracking visit (Firebase not configured?)", error);
             // Fallback to localStorage if Firebase fails/not configured
             let stats = JSON.parse(localStorage.getItem('nexa_stats')) || { totalVisits: 0, uniqueVisitors: 0, dailyVisits: {} };
             stats.totalVisits++;
-            if (!sessionStorage.getItem('nexa_visited')) {
+            if (!localStorage.getItem('nexa_visited')) {
                 stats.uniqueVisitors++;
-                sessionStorage.setItem('nexa_visited', 'true');
+                localStorage.setItem('nexa_visited', 'true');
             }
             stats.dailyVisits[today] = (stats.dailyVisits[today] || 0) + 1;
             localStorage.setItem('nexa_stats', JSON.stringify(stats));

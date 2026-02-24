@@ -202,7 +202,7 @@
     </div>
 
     <script type="module">
-        import { db, doc, getDoc, setDoc, updateDoc, collection, getDocs, increment } from './firebase-config.js';
+        import { db, doc, getDoc, setDoc, updateDoc, collection, getDocs, increment, onSnapshot } from './firebase-config.js';
 
         const adminContent = document.getElementById('admin-content');
         const resetBtn = document.getElementById('reset-btn');
@@ -254,6 +254,52 @@
                 accessLabel.style.display = 'none';
                 await renderStats(false);
             }
+
+            // Listen for live updates
+            onSnapshot(doc(db, 'analytics', 'stats'), (docSnap) => {
+                if (docSnap.exists()) {
+                    const stats = docSnap.data();
+                    document.getElementById('total-visits').innerText = (stats.totalVisits || 0).toLocaleString();
+                    document.getElementById('unique-visitors').innerText = (stats.uniqueVisitors || 0).toLocaleString();
+
+                    if (isAdmin) {
+                        if (document.activeElement !== document.getElementById('override-total')) {
+                            document.getElementById('override-total').value = stats.totalVisits || 0;
+                        }
+                        if (document.activeElement !== document.getElementById('override-unique')) {
+                            document.getElementById('override-unique').value = stats.uniqueVisitors || 0;
+                        }
+                    }
+
+                    // Re-render table
+                    const dailyBody = document.getElementById('daily-body');
+                    const dailyVisits = stats.dailyVisits || {};
+                    const dates = Object.keys(dailyVisits).sort((a, b) => {
+                        const [da, ma, ya] = a.split('-').map(Number);
+                        const [db, mb, yb] = b.split('-').map(Number);
+                        return new Date(yb, mb - 1, db) - new Date(ya, ma - 1, da);
+                    });
+
+                    dailyBody.innerHTML = dates.map(date => {
+                        const visits = dailyVisits[date];
+                        const percent = stats.totalVisits > 0 ? ((visits / stats.totalVisits) * 100).toFixed(1) : 0;
+                        return `
+                            <tr>
+                                <td style="font-weight: 500;">${date}</td>
+                                <td style="color: var(--secondary); font-weight: 600;">${visits}</td>
+                                <td>
+                                    <div style="display: flex; align-items: center; gap: 10px;">
+                                        <div style="flex: 1; height: 8px; background: rgba(255,255,255,0.05); border-radius: 4px; overflow: hidden;">
+                                            <div style="width: ${percent}%; height: 100%; background: var(--secondary);"></div>
+                                        </div>
+                                        <span style="font-size: 0.8rem; color: var(--text-gray); width: 40px;">${percent}%</span>
+                                    </div>
+                                </td>
+                            </tr>
+                        `;
+                    }).join('') || '<tr><td colspan="3" style="text-align:center; color: var(--text-gray);">No hay datos todavía.</td></tr>';
+                }
+            });
         }
 
         async function renderStats(isFullAdmin) {
