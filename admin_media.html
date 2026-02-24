@@ -817,6 +817,9 @@
             btn.disabled = true;
 
             try {
+                // Guardar localmente como respaldo inmediato
+                localStorage.setItem('nexa_media', JSON.stringify(mediaState));
+
                 await setDoc(doc(db, 'config', 'media'), mediaState);
 
                 // Show toast
@@ -830,7 +833,7 @@
                 }, 3000);
             } catch (err) {
                 console.error('NexaCore Cloud Save Error:', err);
-                alert('⚠️ ERROR AL GUARDAR EN LA NUBE: ' + err.message);
+                alert('⚠️ ERROR AL GUARDAR EN LA NUBE: ' + err.message + '\n\nLos cambios se han guardado localmente de forma temporal.');
                 btn.innerText = originalText;
                 btn.disabled = false;
             }
@@ -867,14 +870,10 @@
             }
         });
 
-        document.querySelector('.admin-container').addEventListener('input', (e) => {
+        document.querySelector('.admin-container').addEventListener('change', (e) => {
             if (e.target.classList.contains('url-input')) {
                 updateMediaValue(e.target.dataset.key, e.target.value);
-            }
-        });
-
-        document.querySelector('.admin-container').addEventListener('change', (e) => {
-            if (e.target.classList.contains('file-input')) {
+            } else if (e.target.classList.contains('file-input')) {
                 processFile(e.target.dataset.key, e.target);
             }
         });
