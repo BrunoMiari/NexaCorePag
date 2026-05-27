@@ -52,10 +52,48 @@ document.addEventListener('DOMContentLoaded', async () => {
     // --- Reviews Synchronization ---
     db.collection('reviews').orderBy('timestamp', 'desc').onSnapshot((snapshot) => {
         reviews = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        if (reviews.length === 0) {
+            reviews = [
+                { name: 'Tech Solutions SA', comment: 'El soporte técnico es increíble, resolvieron nuestro problema en minutos.', rating: 5, date: '25/05/2026' },
+                { name: 'Innovación Global', comment: 'La plataforma nos ha ahorrado mucho tiempo de gestión. Muy recomendada.', rating: 5, date: '22/05/2026' },
+                { name: 'StartUp Studio', comment: 'Interfaz intuitiva y rápida, aunque nos gustaría más integraciones.', rating: 4, date: '20/05/2026' },
+                { name: 'NexGen Logistics', comment: 'Nos sorprendió la rapidez de despliegue. Las automatizaciones son fantásticas.', rating: 5, date: '18/05/2026' },
+                { name: 'Finanzas Capital', comment: 'La seguridad que proporcionan nos da mucha tranquilidad. El equipo es muy profesional.', rating: 5, date: '15/05/2026' },
+                { name: 'Retail Dynamics', comment: 'Gran servicio, aunque al principio nos costó adaptarnos al nuevo panel de control.', rating: 4, date: '12/05/2026' },
+                { name: 'Agencia Creativa X', comment: 'El soporte para Mac es mejorable, pero en Windows funciona a la perfección.', rating: 4, date: '10/05/2026' },
+                { name: 'Colegio San Pablo', comment: 'Nos gestionan toda el aula de informática. Nunca habíamos tenido tan pocos problemas.', rating: 5, date: '08/05/2026' },
+                { name: 'Salud 24h', comment: 'La respuesta a los tickets urgentes es casi inmediata. Muy satisfechos.', rating: 5, date: '05/05/2026' },
+                { name: 'Constructora Beta', comment: 'Excelente plataforma para ver el estado de todos nuestros servidores en un solo lugar.', rating: 5, date: '01/05/2026' },
+                { name: 'Estudio Jurídico', comment: 'Nos migraron a la nube sin cortes de servicio. Un trabajo impecable.', rating: 5, date: '28/04/2026' },
+                { name: 'EcoFoods', comment: 'Buena herramienta, pero echamos en falta reportes en PDF más personalizados.', rating: 3, date: '25/04/2026' },
+                { name: 'Boutique Hotel', comment: 'El mantenimiento preventivo ha reducido nuestras caídas de red a cero.', rating: 5, date: '20/04/2026' },
+                { name: 'Automoción SUR', comment: 'Solución sólida. Los backups automáticos nos salvaron de un desastre.', rating: 5, date: '18/04/2026' },
+                { name: 'Consultora HR', comment: 'Como empresa valoramos mucho la arquitectura que usan. Muy robusta.', rating: 5, date: '15/04/2026' }
+            ];
+        }
         renderReviews();
     }, (error) => {
         console.warn("NexaCore: Error loading reviews", error);
         reviews = JSON.parse(localStorage.getItem('nexa_reviews')) || [];
+        if (reviews.length === 0) {
+            reviews = [
+                { name: 'Tech Solutions SA', comment: 'El soporte técnico es increíble, resolvieron nuestro problema en minutos.', rating: 5, date: '25/05/2026' },
+                { name: 'Innovación Global', comment: 'La plataforma nos ha ahorrado mucho tiempo de gestión. Muy recomendada.', rating: 5, date: '22/05/2026' },
+                { name: 'StartUp Studio', comment: 'Interfaz intuitiva y rápida, aunque nos gustaría más integraciones.', rating: 4, date: '20/05/2026' },
+                { name: 'NexGen Logistics', comment: 'Nos sorprendió la rapidez de despliegue. Las automatizaciones son fantásticas.', rating: 5, date: '18/05/2026' },
+                { name: 'Finanzas Capital', comment: 'La seguridad que proporcionan nos da mucha tranquilidad. El equipo es muy profesional.', rating: 5, date: '15/05/2026' },
+                { name: 'Retail Dynamics', comment: 'Gran servicio, aunque al principio nos costó adaptarnos al nuevo panel de control.', rating: 4, date: '12/05/2026' },
+                { name: 'Agencia Creativa X', comment: 'El soporte para Mac es mejorable, pero en Windows funciona a la perfección.', rating: 4, date: '10/05/2026' },
+                { name: 'Colegio San Pablo', comment: 'Nos gestionan toda el aula de informática. Nunca habíamos tenido tan pocos problemas.', rating: 5, date: '08/05/2026' },
+                { name: 'Salud 24h', comment: 'La respuesta a los tickets urgentes es casi inmediata. Muy satisfechos.', rating: 5, date: '05/05/2026' },
+                { name: 'Constructora Beta', comment: 'Excelente plataforma para ver el estado de todos nuestros servidores en un solo lugar.', rating: 5, date: '01/05/2026' },
+                { name: 'Estudio Jurídico', comment: 'Nos migraron a la nube sin cortes de servicio. Un trabajo impecable.', rating: 5, date: '28/04/2026' },
+                { name: 'EcoFoods', comment: 'Buena herramienta, pero echamos en falta reportes en PDF más personalizados.', rating: 3, date: '25/04/2026' },
+                { name: 'Boutique Hotel', comment: 'El mantenimiento preventivo ha reducido nuestras caídas de red a cero.', rating: 5, date: '20/04/2026' },
+                { name: 'Automoción SUR', comment: 'Solución sólida. Los backups automáticos nos salvaron de un desastre.', rating: 5, date: '18/04/2026' },
+                { name: 'Consultora HR', comment: 'Como empresa valoramos mucho la arquitectura que usan. Muy robusta.', rating: 5, date: '15/04/2026' }
+            ];
+        }
         renderReviews();
     });
 
