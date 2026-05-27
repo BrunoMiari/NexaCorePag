@@ -43,22 +43,8 @@
                     </div>
                 </div>
                 <div class="hero-visual">
-                    <div class="video-container">
-                        <video autoplay muted loop playsinline id="hero-video-el"
-                            poster="https://placehold.co/800x500/003554/white?text=NexaCore+Platform">
-                            <source id="hero-video-src"
-                                src="https://assets.mixkit.co/videos/preview/mixkit-digital-animation-of-a-network-background-12345-large.mp4"
-                                type="video/mp4">
-                        </video>
-                        <div class="ui-overlay">
-                            <div class="ui-mockup">
-                                <div class="ui-bar"></div>
-                                <div class="ui-content">
-                                    <div class="ui-chart"></div>
-                                    <div class="ui-list"></div>
-                                </div>
-                            </div>
-                        </div>
+                    <div class="video-container" style="display: flex; align-items: center; justify-content: center;">
+                        <img src="hero_img.png" alt="NexaCore Platform Dashboard" style="width: 100%; border-radius: 12px; box-shadow: 0 0 40px rgba(0,168,232,0.3); border: 1px solid rgba(255,255,255,0.1);">
                     </div>
                 </div>
             </div>
@@ -208,14 +194,8 @@
                             <a href="demo.html" class="btn btn-primary" style="margin-top: 2rem;">Abrir Demo
                                 Interactiva</a>
                         </div>
-                        <div class="video-box">
-                            <video autoplay muted loop playsinline id="demo-video-el"
-                                poster="https://placehold.co/800x450/051923/white?text=NexaCore+Demo">
-                                <source id="demo-video-src"
-                                    src="https://assets.mixkit.co/videos/preview/mixkit-software-developer-working-on-code-34356-large.mp4"
-                                    type="video/mp4">
-                                Tu navegador no soporta el formato de video.
-                            </video>
+                        <div class="video-box" style="display: flex; align-items: center; justify-content: center;">
+                            <img src="demo_img.png" alt="NexaCore Demo Console" style="width: 100%; border-radius: 12px; box-shadow: 0 0 30px rgba(0,168,232,0.3); border: 1px solid rgba(255,255,255,0.1);">
                         </div>
                     </div>
                 </div>
@@ -229,7 +209,7 @@
                     </div>
                     <div class="shop-grid">
                         <div class="product-card">
-                            <div class="product-img" id="shop-img-1"></div>
+                            <img src="pack_standard.png" class="product-img" alt="Standard License" style="width: 100%; object-fit: cover;">
                             <div class="product-info">
                                 <h4>Standard License</h4>
                                 <p>Hasta 50 endpoints con RMM básico.</p>
@@ -239,7 +219,7 @@
                             </div>
                         </div>
                         <div class="product-card featured">
-                            <div class="product-img" id="shop-img-2"></div>
+                            <img src="pack_enterprise.png" class="product-img" alt="Enterprise Suite" style="width: 100%; object-fit: cover;">
                             <div class="product-info">
                                 <h4>Enterprise Suite</h4>
                                 <p>Endpoints ilimitados + Backup + EDR.</p>
@@ -249,7 +229,7 @@
                             </div>
                         </div>
                         <div class="product-card">
-                            <div class="product-img" id="shop-img-3"></div>
+                            <img src="pack_security.png" class="product-img" alt="Security Pack" style="width: 100%; object-fit: cover;">
                             <div class="product-info">
                                 <h4>Security Pack</h4>
                                 <p>Firewall Hardware + 1 año de soporte.</p>
