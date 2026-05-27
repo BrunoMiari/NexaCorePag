@@ -1127,6 +1127,17 @@
             }, 2000);
         }
 
+        // Exponer funciones al scope global para que funcionen los onclick en el HTML
+        window.showView = showView;
+        window.showDeviceDetail = showDeviceDetail;
+        window.runScript = runScript;
+        window.openChat = openChat;
+        window.closeChat = closeChat;
+        window.sendChatMessage = sendChatMessage;
+        window.showTicketAction = showTicketAction;
+        window.closeResolve = closeResolve;
+        window.confirmResolution = confirmResolution;
+
         window.onload = () => {
             populateDevices();
             populateDeviceSelector();
