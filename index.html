@@ -405,7 +405,35 @@
         </div>
     </footer>
 
-    <script type="module" src="main.js"></script>
+    <!-- Firebase Compat SDKs (Fix for local file opening / file://) -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-storage-compat.js"></script>
+    
+    <!-- Script principal corregido -->
+    <script src="main.js"></script>
+
+    <!-- Sistema de recuperación de emergencia por si falla main.js -->
+    <script>
+        document.getElementById('admin-login-btn').onclick = function() {
+            document.getElementById('admin-modal').style.display = 'block';
+        };
+        document.querySelector('.close').onclick = function() {
+            document.getElementById('admin-modal').style.display = 'none';
+        };
+        document.getElementById('admin-login-form').onsubmit = function(e) {
+            e.preventDefault();
+            const u = document.getElementById('admin-user').value;
+            const p = document.getElementById('admin-pass').value;
+            if (u === 'Bruno' && p === 'Bruno2008') {
+                sessionStorage.setItem('nexa_admin', 'true');
+                alert('Bienvenido, Bruno.');
+                window.location.href = 'admin_stats.html';
+            } else {
+                alert('Credenciales incorrectas.');
+            }
+        };
+    </script>
 </body>
 
 </html>
